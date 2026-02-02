@@ -4,17 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>First Arakha Chat</title>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 350px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #0084ff; border: none; border-radius: 8px; color: white; cursor: pointer; }
-        #messages { height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; background: #fafafa; }
-        .msg { margin-bottom: 8px; padding: 5px; border-radius: 5px; background: #e4e6eb; font-size: 14px; }
+        body { font-family: 'Pyidaungsu', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #0084ff; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
+        #messages { height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; background: #fafafa; text-align: left; }
+        .msg { margin-bottom: 8px; padding: 8px; border-radius: 8px; background: #e4e6eb; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -24,21 +25,23 @@
         <h2 id="title">အကောင့်ဝင်ပါ</h2>
         <input type="email" id="email" placeholder="အီးမေးလ်">
         <input type="password" id="password" placeholder="လျှို့ဝှက်နံပါတ်">
-        <button id="mainBtn" onclick="handleAuth()">အကောင့်ဝင်မည်</button>
-        <p onclick="toggleMode()" style="color:blue; cursor:pointer; font-size:12px; margin-top:10px;">အကောင့်အသစ်ဖွင့်ရန် နှိပ်ပါ</p>
+        <button onclick="handleAuth()" id="mainBtn">အကောင့်ဝင်မည်</button>
+        <p id="toggleBtn" onclick="toggleMode()" style="color:#0084ff; cursor:pointer; font-size:13px; margin-top:15px;">အကောင့်အသစ်ဖွင့်ရန်</p>
     </div>
 
     <div id="chat-section" style="display:none;">
-        <h2>စကားပြောခန်း</h2>
+        <h3 style="color:#0084ff;">First Arakha Chat</h3>
         <div id="messages"></div>
-        <input type="text" id="msgInput" placeholder="စာရိုက်ပါ...">
-        <button onclick="sendMessage()">ပို့မည်</button>
-        <button onclick="auth.signOut()" style="background:gray; margin-top:5px;">ထွက်မည်</button>
+        <div style="display: flex; gap: 5px;">
+            <input type="text" id="msgInput" placeholder="စာရိုက်ပါ..." style="margin:0;">
+            <button onclick="sendMessage()" style="width: 70px;">ပို့</button>
+        </div>
+        <button onclick="firebase.auth().signOut()" style="background:#ff4444; margin-top:10px; font-size: 12px;">ထွက်မည်</button>
     </div>
 </div>
 
 <script>
-    // ကိုကို့ရဲ့ Config
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -48,62 +51,36 @@
         appId: "1:4263070909:web:ef4e4a2c0891be1f49bbd4"
     };
 
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
-    let isLogin = true;
+    let isLoginMode = true;
 
-    function toggleMode() {
-        isLogin = !isLogin;
-        document.getElementById('title').innerText = isLogin ? "အကောင့်ဝင်ပါ" : "အကောင့်အသစ်ဖွင့်ပါ";
-        document.getElementById('mainBtn').innerText = isLogin ? "အကောင့်ဝင်မည်" : "စာရင်းသွင်းမည်";
-    }
+    // Toggle Mode Function
+    window.toggleMode = function() {
+        isLoginMode = !isLoginMode;
+        document.getElementById('title').innerText = isLoginMode ? "အကောင့်ဝင်ပါ" : "အကောင့်အသစ်ဖွင့်ပါ";
+        document.getElementById('mainBtn').innerText = isLoginMode ? "အကောင့်ဝင်မည်" : "စာရင်းသွင်းမည်";
+        document.getElementById('toggleBtn').innerText = isLoginMode ? "အကောင့်အသစ်ဖွင့်ရန်" : "အကောင့်ရှိပြီးသားလား? ဝင်လိုက်ပါ";
+    };
 
-    // အကောင့်ဝင်/ထွက် စောင့်ကြည့်ပေးမယ်
+    // Auth Change Listener
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('chat-section').style.display = 'block';
-            loadMessages(); // စာတွေ ဆွဲထုတ်မယ်
+            loadMessages();
         } else {
             document.getElementById('login-section').style.display = 'block';
             document.getElementById('chat-section').style.display = 'none';
         }
     });
 
-    function handleAuth() {
+    // Handle Auth Function
+    window.handleAuth = function() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        if (isLogin) {
-            auth.signInWithEmailAndPassword(email, password).catch(e => alert(e.message));
-        } else {
-            auth.createUserWithEmailAndPassword(email, password).catch(e => alert(e.message));
-        }
-    }
-
-    function sendMessage() {
-
-const msg = document.getElementById('msgInput').value;
-        if (msg) {
-            db.ref("messages").push({
-                user: auth.currentUser.email,
-                text: msg,
-                time: Date.now()
-            });
-            document.getElementById('msgInput').value = "";
-        }
-    }
-
-    function loadMessages() {
-        db.ref("messages").limitToLast(20).on("child_added", snap => {
-            const data = snap.val();
-            const msgBox = document.getElementById('messages');
-            msgBox.innerHTML += <div class="msg"><b>${data.user.split('@')[0]}</b>: ${data.text}</div>;
-            msgBox.scrollTop = msgBox.scrollHeight;
-        });
-    }
-</script>
-
-</body>
-</html>
+        
+        if(!email || !password) return alert("ဖြည့်ဦးလေ ကိုကိုရယ်!");
