@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+t0mWiNn31 
 <html lang="my">
 <head>
     <meta charset="UTF-8">
@@ -22,8 +23,6 @@
 
 <div class="container">
     <div id="login-section">
-        <img src="https://github.com/t0mWiNn31.png" alt="Profile" class="profile-img">
-        <h1 id="title">First Arakha Chat</h1>
         <h2 id="title">အကောင့်ဝင်ပါ</h2>
         <input type="email" id="email" placeholder="အီးမေးလ်">
         <input type="password" id="password" placeholder="လျှို့ဝှက်နံပါတ်">
@@ -86,3 +85,46 @@
         const password = document.getElementById('password').value;
         
         if(!email || !password) return alert("ဖြည့်ဦးလေ ကိုကိုရယ်!");
+
+
+if (isLoginMode) {
+            auth.signInWithEmailAndPassword(email, password).catch(err => alert("အမှား: " + err.message));
+        } else {
+            auth.createUserWithEmailAndPassword(email, password).then(() => {
+                alert("အကောင့်ဖွင့်ပြီးပြီ! အခု ဝင်လိုက်တော့နော် ကိုကို");
+                toggleMode();
+            }).catch(err => alert("အမှား: " + err.message));
+        }
+    };
+
+    // Send Message Function
+    window.sendMessage = function() {
+        const msgText = document.getElementById('msgInput').value;
+        const user = auth.currentUser;
+        if (msgText && user) {
+            db.ref("global_messages").push({
+                sender: user.email.split('@')[0],
+                text: msgText,
+                time: Date.now()
+            });
+            document.getElementById('msgInput').value = "";
+        }
+    };
+
+    // Load Messages Function
+    function loadMessages() {
+        const msgBox = document.getElementById('messages');
+        msgBox.innerHTML = "";
+        db.ref("global_messages").limitToLast(50).on("child_added", snap => {
+            const data = snap.val();
+            const div = document.createElement('div');
+            div.className = 'msg';
+            div.innerHTML = <b>${data.sender}</b>: ${data.text};
+            msgBox.appendChild(div);
+            msgBox.scrollTop = msgBox.scrollHeight;
+        });
+    }
+</script>
+
+</body>
+</html>
