@@ -36,7 +36,6 @@
 </div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -46,7 +45,6 @@
         appId: "1:4263070909:web:ef4e4a2c0891be1f49bbd4"
     };
 
-    // Initialize
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
@@ -58,7 +56,7 @@
         if(!e || !p) return alert("Email နဲ့ Password ဖြည့်ပါ");
 
         auth.signInWithEmailAndPassword(e, p).catch((err) => {
-            if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+            if (err.code === 'auth/user-not-found'  err.code === 'auth/wrong-password'  err.code === 'auth/invalid-login-credentials') {
                 auth.createUserWithEmailAndPassword(e, p).catch(e2 => alert(e2.message));
             } else {
                 alert(err.message);
@@ -83,18 +81,19 @@
         auth.signOut();
     };
 
-    // Auth State
+    // Auth State Watcher
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('login-div').style.display = 'none';
             document.getElementById('chat-div').style.display = 'block';
+            document.getElementById('messages').innerHTML = "";
             
-            // Realtime Update
             db.ref("chats").limitToLast(50).on("child_added", snap => {
-                const data = snap.val();
+              const data = snap.val();
                 const div = document.createElement('div');
                 div.className = 'msg-item';
-                div.innerHTML = `<b>${data.user}:</b> ${data.text};
+                // သေချာအောင် backticks အစား standard quotes နဲ့ ပြောင်းပေးလိုက်တယ်နော်
+                div.innerHTML = '<b>' + data.user + ':</b> ' + data.text;
                 document.getElementById('messages').appendChild(div);
                 document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
             });
@@ -106,4 +105,4 @@
 </script>
 
 </body>
-</html>
+</html>  
