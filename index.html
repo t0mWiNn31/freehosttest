@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-t0mWiNn31 
 <html lang="my">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +10,7 @@ t0mWiNn31
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
-        body { font-family: 'Pyidaungsu', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 350px; text-align: center; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; background: #0084ff; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
@@ -27,7 +26,7 @@ t0mWiNn31
         <input type="email" id="email" placeholder="အီးမေးလ်">
         <input type="password" id="password" placeholder="လျှို့ဝှက်နံပါတ်">
         <button onclick="handleAuth()" id="mainBtn">အကောင့်ဝင်မည်</button>
-        <p id="toggleBtn" onclick="toggleMode()" style="color:#0084ff; cursor:pointer; font-size:13px; margin-top:15px;">အကောင့်အသစ်ဖွင့်ရန်</p>
+        <p id="toggleBtn" onclick="toggleMode()" style="color:#0084ff; cursor:pointer; font-size:13px; margin-top:15px;">အကောင့်အသစ်ဖွင့်ရန် နှိပ်ပါ</p>
     </div>
 
     <div id="chat-section" style="display:none;">
@@ -42,7 +41,6 @@ t0mWiNn31
 </div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -52,22 +50,19 @@ t0mWiNn31
         appId: "1:4263070909:web:ef4e4a2c0891be1f49bbd4"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
     let isLoginMode = true;
 
-    // Toggle Mode Function
     window.toggleMode = function() {
         isLoginMode = !isLoginMode;
         document.getElementById('title').innerText = isLoginMode ? "အကောင့်ဝင်ပါ" : "အကောင့်အသစ်ဖွင့်ပါ";
         document.getElementById('mainBtn').innerText = isLoginMode ? "အကောင့်ဝင်မည်" : "စာရင်းသွင်းမည်";
-        document.getElementById('toggleBtn').innerText = isLoginMode ? "အကောင့်အသစ်ဖွင့်ရန်" : "အကောင့်ရှိပြီးသားလား? ဝင်လိုက်ပါ";
+        document.getElementById('toggleBtn').innerText = isLoginMode ? "အကောင့်အသစ်ဖွင့်ရန် နှိပ်ပါ" : "အကောင့်ရှိပြီးသားလား? ဝင်လိုက်ပါ";
     };
 
-    // Auth Change Listener
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('login-section').style.display = 'none';
@@ -79,25 +74,19 @@ t0mWiNn31
         }
     });
 
-    // Handle Auth Function
     window.handleAuth = function() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        
         if(!email || !password) return alert("ဖြည့်ဦးလေ ကိုကိုရယ်!");
 
 
 if (isLoginMode) {
             auth.signInWithEmailAndPassword(email, password).catch(err => alert("အမှား: " + err.message));
         } else {
-            auth.createUserWithEmailAndPassword(email, password).then(() => {
-                alert("အကောင့်ဖွင့်ပြီးပြီ! အခု ဝင်လိုက်တော့နော် ကိုကို");
-                toggleMode();
-            }).catch(err => alert("အမှား: " + err.message));
+            auth.createUserWithEmailAndPassword(email, password).catch(err => alert("အမှား: " + err.message));
         }
     };
 
-    // Send Message Function
     window.sendMessage = function() {
         const msgText = document.getElementById('msgInput').value;
         const user = auth.currentUser;
@@ -111,10 +100,8 @@ if (isLoginMode) {
         }
     };
 
-    // Load Messages Function
     function loadMessages() {
         const msgBox = document.getElementById('messages');
-        msgBox.innerHTML = "";
         db.ref("global_messages").limitToLast(50).on("child_added", snap => {
             const data = snap.val();
             const div = document.createElement('div');
@@ -125,6 +112,5 @@ if (isLoginMode) {
         });
     }
 </script>
-
 </body>
 </html>
