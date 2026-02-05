@@ -3,52 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arakha Forum - နည်းပညာဆွေးနွေးပွဲ</title>
+    <title>Arakha Community</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Pyidaungsu', 'Segoe UI', sans-serif; }
-        .nav { background: #1a1a1a; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ff41; }
-        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
-        
-        /* Post Input Box */
-        .post-box { background: #1a1a1a; padding: 20px; border-radius: 8px; border: 1px solid #333; margin-bottom: 30px; }
-        input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #00ff41; padding: 12px; margin-bottom: 10px; border-radius: 5px; outline: none; }
-        button { background: #00ff41; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; }
-        
-        /* Feed */
-        .post-card { background: #1a1a1a; padding: 20px; border-radius: 8px; border-left: 4px solid #00ff41; margin-bottom: 15px; transition: 0.3s; }
-        .post-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,255,65,0.1); }
-        .post-title { color: #00ff41; font-size: 1.2rem; margin-bottom: 8px; font-weight: bold; }
-        .post-content { font-size: 15px; line-height: 1.6; color: #ccc; margin-bottom: 12px; }
-        .post-meta { font-size: 11px; color: #666; border-top: 1px solid #333; pt: 8px; display: flex; justify-content: space-between; }
-        
-        .header-title { color: #00ff41; font-weight: bold; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        body { background: #0a0a0a; color: #ccc; font-family: sans-serif; margin: 0; }
+        .nav { background: #111; padding: 15px; border-bottom: 1px solid #00ff41; display: flex; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .container { max-width: 700px; margin: 20px auto; padding: 10px; }
+        .post-input { background: #111; padding: 20px; border: 1px solid #333; margin-bottom: 20px; }
+        input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 10px; margin-top: 10px; outline: none; }
+        button { background: #00ff41; color: #000; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .card { background: #161616; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #222; }
+        .user { color: #00ff41; font-weight: bold; font-size: 13px; }
+        .title { font-size: 18px; color: #fff; margin: 10px 0; }
+        .action-bar { border-top: 1px solid #222; padding-top: 10px; display: flex; gap: 20px; font-size: 13px; }
+        .like-btn { cursor: pointer; color: #00ff41; }
     </style>
 </head>
 <body>
 
 <div class="nav">
-    <div class="header-title">ARAKHA_FORUM</div>
-    <div>
-        <button onclick="location.href='chat.html'" style="background:none; color:#00ff41; border:1px solid #00ff41; margin-right:10px;">CHAT ROOM</button>
-        <button onclick="firebase.auth().signOut()">LOGOUT</button>
-    </div>
+    <b style="color:#00ff41">ARAKHA_FORUM</b>
+    <span id="user-display" style="font-size:12px"></span>
+    <button onclick="logout()" style="background:#ff4444; color:#fff; padding:5px 10px; margin:0">LOGOUT</button>
 </div>
 
 <div class="container">
-    <div class="post-box">
-        <h3 style="color:#00ff41; margin-bottom:15px;">စာသစ်တင်မည်</h3>
-        <input type="text" id="postTitle" placeholder="ခေါင်းစဉ် (ဥပမာ - နည်းပညာအကြောင်း)">
-        <textarea id="postContent" rows="3" placeholder="ဘာတွေဆွေးနွေးချင်လဲ ရေးပါ..."></textarea>
-        <button onclick="createPost()">POST တင်မည်</button>
+    <div class="post-input">
+        <h3 style="margin:0; color:#00ff41">မေးချင်တာမေး ဆွေးနွေးချင်တာဆွေး</h3>
+        <input type="text" id="t" placeholder="ခေါင်းစဉ်">
+        <textarea id="c" rows="3" placeholder="အကြောင်းအရာ..."></textarea>
+        <button onclick="post()">POST တင်မည်</button>
     </div>
-
-    <div id="forum-feed">
-        <p style="text-align:center; color:#666;">ပို့စ်များကို ဆွဲတင်နေသည်...</p>
-    </div>
+    <div id="feed"></div>
 </div>
 
 <script>
@@ -61,57 +49,51 @@
     };
     firebase.initializeApp(config);
     const db = firebase.database();
+    let currentUsername = "";
 
-    // Auth Watcher
     firebase.auth().onAuthStateChanged(user => {
-        if (!user) { location.href = "index.html"; }
-        else { loadPosts(); }
+        if(!user) return window.location.href = "index.html";
+        db.ref('users/' + user.uid).once('value', s => {
+            currentUsername = s.val() ? s.val().username : user.email.split('@')[0];
+            document.getElementById('user-display').innerText = "Logged in as: " + currentUsername;
+            load();
+        });
     });
 
-    // Create Post Function
-    function createPost() {
-        const title = document.getElementById('postTitle').value;
-        const content = document.getElementById('postContent').value;
-        const user = firebase.auth().currentUser;
-
-        if(title && content && user) {
-            db.ref("forum_posts").push({
-                title: title,
-                content: content,
-                author: user.email.split('@')[0],
-                timestamp: Date.now()
-            }).then(() => {
-                document.getElementById('postTitle').value = "";
-                document.getElementById('postContent').value = "";
-            });
-        } else {
-            alert("ခေါင်းစဉ်နဲ့ အကြောင်းအရာ ပြည့်စုံအောင် ဖြည့်ပါ ကိုကို");
+    function post() {
+        const t = document.getElementById('t').value, c = document.getElementById('c').value;
+        if(t && c) {
+            db.ref("posts").push({ u: currentUsername, t: t, c: c, likes: 0, time: Date.now() });
+            document.getElementById('t').value = ""; document.getElementById('c').value = "";
         }
     }
 
-    // Load Posts from Firebase
-    function loadPosts() {
-        const feed = document.getElementById('forum-feed');
-        db.ref("forum_posts").orderByChild("timestamp").on("value", snap => {
-            feed.innerHTML = "";
-            let posts = [];
-            snap.forEach(child => { posts.push(child.val()); });
-            posts.reverse().forEach(data => {
-                const date = new Date(data.timestamp).toLocaleString();
+    function load() {
+        db.ref("posts").orderByChild("time").on("value", s => {
+            const feed = document.getElementById('feed'); feed.innerHTML = "";
+            let items = []; s.forEach(child => { items.push({key: child.key, ...child.val()}); });
+            items.reverse().forEach(p => {
                 feed.innerHTML += `
-                    <div class="post-card">
-                        <div class="post-title">${data.title}</div>
-                        <div class="post-content">${data.content}</div>
-                        <div class="post-meta">
-                            <span>BY: ${data.author.toUpperCase()}</span>
-                            <span>DATE: ${date}</span>
-                        </div>
+                <div class="card">
+                    <div class="user">@${p.u}</div>
+                    <div class="title">${p.t}</div>
+                    <div style="font-size:14px">${p.c}</div>
+                    <div class="action-bar">
+                        <span class="like-btn" onclick="like('${p.key}', ${p.likes})">▲ Like (${p.likes})</span>
+                        <span style="color:#888">Reply (Coming Soon)</span>
                     </div>
-                `;
+                </div>`;
             });
         });
     }
-</script>
 
+    function like(key, count) { db.ref("posts/" + key).update({ likes: count + 1 }); }
+
+    function logout() {
+        if(confirm("အကောင့်ထဲကနေ ထွက်မှာ သေချာလား ကိုကို?")) {
+            firebase.auth().signOut().then(() => { window.location.href = "index.html"; });
+        }
+    }
+</script>
 </body>
 </html>
