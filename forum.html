@@ -9,30 +9,41 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         body { background: #0a0a0a; color: #ccc; font-family: sans-serif; margin: 0; }
-        .nav { background: #111; padding: 15px; border-bottom: 1px solid #00ff41; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .nav { background: #111; padding: 10px 15px; border-bottom: 1px solid #00ff41; position: sticky; top: 0; z-index: 100; }
+        .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .nav-tabs { display: flex; gap: 20px; border-top: 1px solid #222; padding-top: 8px; }
+        .tab { font-size: 13px; color: #888; cursor: pointer; padding: 5px 0; border-bottom: 2px solid transparent; transition: 0.3s; }
+        .tab.active { color: #00ff41; border-bottom: 2px solid #00ff41; }
+        
         .container { max-width: 700px; margin: 20px auto; padding: 10px; }
         .post-input { background: #111; padding: 20px; border: 1px solid #333; margin-bottom: 20px; border-radius: 8px; }
         input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 12px; margin-top: 10px; outline: none; box-sizing: border-box; }
         button { background: #00ff41; color: #000; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 4px; }
-        .card { background: #161616; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #222; }
+        
+        .card { background: #161616; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #222; animation: fadeIn 0.5s; }
         .user { color: #00ff41; font-weight: bold; font-size: 13px; }
         .title { font-size: 18px; color: #fff; margin: 10px 0; }
         .ai-box { background: rgba(0, 255, 65, 0.05); border: 1px dashed #00ff41; padding: 12px; margin-top: 15px; font-size: 13px; border-radius: 4px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="nav">
-    <div>
-        <b style="color:#00ff41">ARAKHA_FORUM</b>
-        <div style="font-size: 10px; color: #888; margin-top: 4px;">
-            ONLINE: <span id="online-count">0</span> | TOTAL: <span id="total-count">0</span>
+    <div class="nav-top">
+        <div>
+            <b style="color:#00ff41">ARAKHA_FORUM</b>
+            <div style="font-size: 10px; color: #666;">ONLINE: <span id="online-count">0</span> | TOTAL: <span id="total-count">0</span></div>
         </div>
+        <div id="user-display" style="font-size: 12px; color: #00ff41;"></div>
+        <button onclick="logout()" style="background:#ff4444; color:#fff; padding:5px 10px; margin:0; font-size: 11px;">LOGOUT</button>
     </div>
     
-    <div id="user-display" style="font-size: 12px; color: #00ff41;"></div>
-
-    <button onclick="logout()" style="background:#ff4444; color:#fff; padding:5px 10px; margin:0">LOGOUT</button>
+    <div class="nav-tabs">
+        <div class="tab active" id="tab-latest" onclick="switchTab('latest')">နောက်ဆုံးတင်ခဲ့တာ</div>
+        <div class="tab" id="tab-popular" onclick="switchTab('popular')">နာမည်ကြီး (Popular)</div>
+    </div>
 </div>
 
 <div class="container">
@@ -56,6 +67,7 @@
     firebase.initializeApp(config);
     const db = firebase.database();
     let currentUsername = "";
+    let currentTab = 'latest'; // Default tab
 
     firebase.auth().onAuthStateChanged(user => {
         if (!user) {
@@ -63,11 +75,8 @@
         } else {
             db.ref('users/' + user.uid).once('value', s => {
                 currentUsername = s.val() ? s.val().username : user.email.split('@')[0];
-                
-                // Element ရှိမှ စာသားသွင်းဖို့ စစ်မယ် (Error ကာကွယ်ရန်)
                 const display = document.getElementById('user-display');
-                if(display) display.innerText = "User: " + currentUsername;
-                
+                if(display) display.innerText = "အသုံးပြုသူ - " + currentUsername;
                 trackPresence(user);
                 load();
             });
@@ -78,70 +87,69 @@
         const onlineRef = db.ref('online/' + user.uid);
         onlineRef.set(true);
         onlineRef.onDisconnect().remove();
+        db.ref('online').on('value', s => { document.getElementById('online-count').innerText = s.numChildren(); });
+        db.ref('users').on('value', s => { document.getElementById('total-count').innerText = s.numChildren(); });
+    }
 
-        db.ref('online').on('value', s => {
-            const el = document.getElementById('online-count');
-            if(el) el.innerText = s.numChildren();
-        });
-        db.ref('users').on('value', s => {
-            const el = document.getElementById('total-count');
-            if(el) el.innerText = s.numChildren();
-        });
+    // Tab ပြောင်းတဲ့ Function
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('tab-latest').classList.remove('active');
+        document.getElementById('tab-popular').classList.remove('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+        load();
     }
 
     async function post() {
         const t = document.getElementById('t').value, c = document.getElementById('c').value;
         if(t && c) {
-            const btn = document.querySelector('button[onclick="post()"]');
-            btn.innerText = "တင်နေသည်..."; btn.disabled = true;
-            
             db.ref("posts").push({ 
                 u: currentUsername, t: t, c: c, 
-                ai: "Gemini စဉ်းစားနေပါတယ်...", 
-                time: Date.now() 
+                ai: "Gemini အဖြေပေးဖို့ စဉ်းစားနေပါတယ်...", 
+                time: Date.now(),
+                views: 0 // Popular အတွက် ကြည့်ရှုသူအရေအတွက် သုံးလို့ရတယ်
             });
-            
             document.getElementById('t').value = ""; 
             document.getElementById('c').value = "";
-            btn.innerText = "POST တင်မေ"; btn.disabled = false;
         }
     }
 
     function load() {
         db.ref("posts").on("value", s => {
             const feed = document.getElementById('feed');
-            if (!feed) return;
             feed.innerHTML = "";
-            
             let items = [];
-            s.forEach(child => {
-                items.push({ key: child.key, ...child.val() });
-            });
+            s.forEach(child => { items.push({ key: child.key, ...child.val() }); });
 
-            items.reverse().forEach(p => {
+            // Sort လုပ်မယ်
+            if (currentTab === 'latest') {
+                items.reverse(); // နောက်ဆုံးတင်တာ အပေါ်ရောက်မယ်
+            } else {
+                // Popular အတွက် အခုလောလောဆယ် random ဒါမှမဟုတ် အရင်တင်တာနဲ့ပဲ ထားထားမယ်
+                // နောက်မှ Like များတဲ့ပို့စ်တွေကို အပေါ်တင်တဲ့ စနစ်ထည့်လို့ရတယ်
+                items.sort((a, b) => (b.views || 0) - (a.views || 0));
+            }
+
+            items.forEach(p => {
                 const card = document.createElement('div');
                 card.className = "card";
                 card.innerHTML = `
                     <div class="user">@${p.u || 'Unknown'}</div>
                     <div class="title">${p.t || 'No Title'}</div>
-                    <p style="font-size:14px; color:#ccc; line-height:1.5;">${p.c || ''}</p>
+                    <p style="font-size:14px; color:#ccc;">${p.c || ''}</p>
                     <div class="ai-box">
                         <b style="color:#00ff41">🤖 Gemini AI:</b><br>
-                        <span style="display:block; margin-top:5px;">${p.ai || 'အဖြေမရှိသေးပါ'}</span>
+                        <span style="display:block; margin-top:5px;">${p.ai}</span>
                     </div>
                 `;
                 feed.appendChild(card);
             });
-        }, (error) => {
-            console.error("Data Load Error: ", error);
         });
     }
 
     function logout() {
-        if (confirm("လားပါဖို့ယာလား?")) {
-            firebase.auth().signOut().then(() => { 
-                window.location.href = "index.html"; 
-            });
+        if (confirm("အကောင့်ထဲက ထွက်ဖို့ သေချာပါသလား?")) {
+            firebase.auth().signOut().then(() => { window.location.href = "index.html"; });
         }
     }
 </script>
