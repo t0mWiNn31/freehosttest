@@ -38,6 +38,15 @@
     </div>
     <div id="feed"></div>
 </div>
+    <div class="nav">
+    <div>
+        <b style="color:#00ff41">ARAKHA_FORUM</b>
+        <div style="font-size: 10px; color: #888;">
+            ONLINE: <span id="online-count" style="color: #00ff41;">0</span> | 
+            TOTAL: <span id="total-count" style="color: #00ff41;">0</span>
+        </div>
+    </div>
+    </div>
 
 <script>
     const config = {
@@ -91,7 +100,30 @@
 
     function logout() {
         if(confirm("လားပါဖို့ယာလား?")) {
-            firebase.auth().signOut().then(() => { window.location.href = "index.html"; });
+            firebase.auth().signOut().then(() => { window.location.href = "index.html"; 
+                                                 function trackPresence(user) {
+    const onlineRef = db.ref('online/' + user.uid);
+    const userRef = db.ref('users/' + user.uid);
+
+    // Online ရှိကြောင်း မှတ်မယ်
+    onlineRef.set(true);
+    
+    // Browser ပိတ်လိုက်ရင် ဒါမှမဟုတ် Logout ထွက်ရင် Online စာရင်းက ဖျက်မယ်
+    onlineRef.onDisconnect().remove();
+
+    // အရေအတွက်ကို စောင့်ကြည့်မယ်
+    db.ref('online').on('value', s => {
+        document.getElementById('online-count').innerText = s.numChildren();
+    });
+    db.ref('users').on('value', s => {
+        document.getElementById('total-count').innerText = s.numChildren();
+    });
+}
+
+// firebase.auth().onAuthStateChanged ထဲမှာ trackPresence(user) ကို ခေါ်ပေးရမယ်
+firebase.auth().onAuthStateChanged(user => {
+    if(user) {
+        trackPresence(user);});
         }
     }
 </script>
