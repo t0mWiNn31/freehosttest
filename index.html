@@ -21,6 +21,7 @@
     </style>
 </head>
 <body>
+    <canvas id="matrixCanvas"></canvas>
     <div class="flag-container">
         <img src="homeflag.svg" alt="Flag" class="flag-img">
     </div>
@@ -43,6 +44,15 @@
     </div>
 
 <script>
+    #matrixCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* အနောက်ဆုံးကို ပို့ထားတာပါ */
+    background-color: black;
+}
     // --- ၁။ Firebase Config (ကိုကို့ Key တွေ ဒီမှာ အစားထိုးပါ) ---
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow", 
@@ -111,5 +121,51 @@
         document.getElementById('total-users').innerText = s.numChildren() || 0;
     });
 </script>
+    const canvas = document.getElementById('matrixCanvas');
+const ctx = canvas.getContext('2d');
+
+// စာမျက်နှာ အပြည့်ဖြစ်အောင် လုပ်ခြင်း
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Matrix မှာ သုံးမယ့် စာလုံးများ (ကိုကို စိတ်ကြိုက် ပြင်လို့ရတယ်)
+const letters = "ARAKHAHACKER010101ဗျာလ်";
+const fontSize = 16;
+const columns = canvas.width / fontSize;
+
+// အစက်အပြောက် တစ်ခုချင်းစီရဲ့ နေရာကို မှတ်ထားခြင်း
+const drops = [];
+for (let i = 0; i < columns; i++) {
+    drops[i] = 1;
+}
+
+function drawMatrix() {
+    // စာလုံးဟောင်းတွေကို ဖြည်းဖြည်းချင်း မှိန်သွားအောင် လုပ်ခြင်း
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#0F0"; // စာလုံးအရောင် (အစိမ်းရောင်)
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+        const text = letters.charAt(Math.floor(Math.random() * letters.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        // စာလုံးတွေ အောက်ရောက်သွားရင် အပေါ်ကနေ ပြန်စခြင်း
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+// ၃၃ မီလီစက္ကန့် တိုင်းမှာ တစ်ခါ ပြန်ဆွဲခြင်း (Frame Rate)
+setInterval(drawMatrix, 33);
+
+// ဖုန်း screen လှည့်ရင် resize လုပ်ဖို့
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
 </body>
 </html>
