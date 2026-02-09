@@ -32,7 +32,7 @@
 <div class="nav">
     <div class="nav-top">
         <div>
-            <b style="color:#00ff41">ARAKHA_FORUM</b>
+            <b style="color:#00ff41">ARAKHA_KNOWLEDGE_FORUM</b>
             <div style="font-size: 10px; color: #666;">ONLINE: <span id="online-count">0</span> | TOTAL: <span id="total-count">0</span></div>
         </div>
         <div id="user-display" style="font-size: 12px; color: #00ff41;"></div>
@@ -47,6 +47,7 @@
 <div class="container">
     <div class="post-input">
         <h3 style="margin:0; color:#00ff41">ရက္ခိုင်သားအချင်းချင်း ပွင့်ပွင့်လင်းလင်းဆွေးနွေးကတ်မေ</h3>
+        <h5 style="margin:0; color:#00ff41">လိုအပ်ချက်တိဟိကေလည်း ပို့စ်တင်ပခပါ</h5>
         <input type="text" id="t" placeholder="ဂေါင်းစိုင်">
         <textarea id="c" rows="3" placeholder="အကြောင်းအရာ..."></textarea>
         <button id="post-btn" onclick="post()">POST တင်မေ</button>
@@ -55,7 +56,7 @@
 </div>
 
 <script>
-    // --- ၁။ Firebase Configuration (ကိုကို့ Key တွေ ထည့်ထားပါတယ်) ---
+  
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -68,7 +69,7 @@
     let currentUsername = "";
     let currentTab = 'latest';
 
-    // --- ၂။ AI FUNCTION (Backend ဆီ လှမ်းမေးအောင် ပြင်ထားပါရေ) ---
+
     async function askGemini(question) {
         try {
             const res = await fetch("/chat", {
@@ -77,14 +78,14 @@
                 body: JSON.stringify({ message: "မင်းနာမည်က ဗျာလ် (Byal) ဖြစ်တယ်။ ရက္ခိုင်နည်းပညာ AI အနေနဲ့ တိုတိုနဲ့ လိုရင်းဖြေပေးပါ။ မေးခွန်း - " + question })
             });
             const data = await res.json();
-            return data.reply; // Backend က ပြန်ပေးတဲ့ AI အဖြေ
+            return data.reply; 
         } catch (e) { 
             console.error("AI Error:", e);
             return "ဗျာလ် အနားယူနီပါရေ (Backend နဲ့ ချိတ်လို့မရပါ)"; 
         }
     }
 
-    // --- ၃။ POST တင်ခြင်းစနစ် ---
+  
     async function post() {
         const t = document.getElementById('t').value, c = document.getElementById('c').value;
         if(t && c) {
@@ -92,7 +93,7 @@
             btn.innerText = "ဗျာလ် စဉ်းစားနီပါရေ..."; 
             btn.disabled = true;
 
-            const aiResponse = await askGemini(c); // AI ဆီက အဖြေတောင်းမယ်
+            const aiResponse = await askGemini(c); 
             
             db.ref("posts").push({ 
                 u: currentUsername, 
@@ -110,7 +111,7 @@
         }
     }
 
-    // --- ၄။ Like & Reply စနစ်များ ---
+  
     function like(id) {
         db.ref("posts/" + id + "/likes").transaction(c => (c || 0) + 1);
     }
@@ -122,7 +123,7 @@
         }
     }
 
-    // --- ၅။ Feed ကို ပြသခြင်းစနစ် ---
+ 
     function load() {
         db.ref("posts").on("value", s => {
             const feed = document.getElementById('feed');
@@ -159,7 +160,7 @@
         });
     }
 
-    // --- ၆။ User Auth & Presence ---
+ 
     firebase.auth().onAuthStateChanged(user => {
         if (!user) { window.location.href = "index.html"; } 
         else {
