@@ -7,28 +7,25 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
     <style>
         /* Matrix Background */
         #matrix-canvas {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1;
         }
 
         body { background: #000; color: #ccc; font-family: sans-serif; margin: 0; overflow-x: hidden; }
         
+        /* Glassmorphism Navigation */
         .nav { 
             background: rgba(17, 17, 17, 0.9); 
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             padding: 10px 15px; 
             border-bottom: 1px solid #00ff41; 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
+            position: sticky; top: 0; z-index: 100; 
         }
         .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .nav-tabs { display: flex; gap: 20px; border-top: 1px solid #222; padding-top: 8px; }
@@ -39,34 +36,41 @@
         
         .post-input { 
             background: rgba(17, 17, 17, 0.85); 
-            padding: 20px; 
-            border: 1px solid #00ff41; 
-            margin-bottom: 20px; 
-            border-radius: 8px; 
-            backdrop-filter: blur(5px);
+            padding: 20px; border: 1px solid #00ff41; 
+            margin-bottom: 20px; border-radius: 8px; 
         }
-        input, textarea { width: 100%; background: #000; border: 1px solid #00ff41; color: #00ff41; padding: 12px; margin-top: 10px; outline: none; box-sizing: border-box; }
+        input, textarea { 
+            width: 100%; background: #000; border: 1px solid #444; color: #00ff41; 
+            padding: 12px; margin-top: 10px; outline: none; box-sizing: border-box; 
+        }
+        input:focus, textarea:focus { border-color: #00ff41; }
         
-        button { background: #00ff41; color: #000; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 4px; }
+        button { 
+            background: #00ff41; color: #000; border: none; 
+            padding: 10px 15px; cursor: pointer; font-weight: bold; 
+            margin-top: 10px; border-radius: 4px; 
+        }
         
         .card { 
             background: rgba(22, 22, 22, 0.9); 
-            padding: 20px; 
-            border-radius: 8px; 
-            margin-bottom: 15px; 
-            border: 1px solid #00ff41; 
-            box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
-            backdrop-filter: blur(5px);
+            padding: 20px; border-radius: 8px; margin-bottom: 15px; 
+            border: 1px solid #222; backdrop-filter: blur(5px);
         }
+        .card:hover { border-color: #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.1); }
+        
         .user { display: flex; align-items: center; gap: 10px; }
         .user a { color: #00ff41; font-weight: bold; font-size: 15px; text-decoration: none; }
-        .avatar { font-size: 25px; background: #000; border-radius: 50%; width: 40px; height: 40px; border: 1px solid #00ff41; display: flex; align-items: center; justify-content: center; }
+        .avatar { 
+            font-size: 25px; background: #111; border-radius: 50%; 
+            width: 40px; height: 40px; border: 1px solid #333; 
+            display: flex; align-items: center; justify-content: center; 
+        }
         
-        .title { font-size: 18px; color: #fff; margin: 10px 0; text-shadow: 0 0 5px #00ff41; }
+        .title { font-size: 18px; color: #fff; margin: 10px 0; font-weight: bold; }
         .action-bar { border-top: 1px solid #222; margin-top: 15px; padding-top: 10px; display: flex; gap: 20px; font-size: 13px; }
         .like-btn { cursor: pointer; color: #00ff41; }
         .reply-box { margin-top: 10px; padding-left: 15px; border-left: 2px solid #00ff41; }
-        .ai-box { background: rgba(0, 255, 65, 0.1); border: 1px dashed #00ff41; padding: 12px; margin-top: 15px; font-size: 13px; border-radius: 4px; color: #00ff41; }
+        .ai-box { background: rgba(0, 255, 65, 0.05); border: 1px dashed #00ff41; padding: 12px; margin-top: 15px; font-size: 13px; border-radius: 4px; color: #00ff41; }
     </style>
 </head>
 <body>
@@ -76,8 +80,8 @@
 <div class="nav">
     <div class="nav-top">
         <div>
-            <b style="color:#00ff41; text-shadow: 0 0 10px #00ff41;">ARAKHA_KNOWLEDGE_FORUM</b>
-            <div style="font-size: 10px; color: #00ff41;">ONLINE: <span id="online-count">0</span> | TOTAL: <span id="total-count">0</span></div>
+            <b style="color:#00ff41">ARAKHA_KNOWLEDGE_FORUM</b>
+            <div style="font-size: 10px; color: #888;">ONLINE: <span id="online-count">0</span> | TOTAL: <span id="total-count">0</span></div>
         </div>
         <div id="user-display" style="font-size: 12px; color: #00ff41;"></div>
         <button onclick="logout()" style="background:#ff4444; color:#fff; padding:5px 10px; margin:0; font-size: 11px;">LOGOUT</button>
@@ -91,7 +95,8 @@
 <div class="container">
     <div class="post-input">
         <h3 style="margin:0; color:#00ff41">ရက္ခိုင်သားအချင်းချင်း ဆွေးနွေးကတ်မေ</h3>
-        <input type="text" id="t" placeholder="ဂေါင်းစိုင်">
+        <h3 style="margin:0; color:#00ff41">...လိုအပ်စော်တိကို ပို့စ်တင်ပခပါ...</h3>
+        <input type="text" id="t" placeholder="ဂေါင်းစိုင် (Title)">
         <textarea id="c" rows="3" placeholder="အကြောင်းအရာ..."></textarea>
         <button id="post-btn" onclick="post()">POST တင်မေ</button>
     </div>
@@ -143,10 +148,13 @@
     firebase.auth().onAuthStateChanged(user => {
         if (!user) window.location.href = "index.html";
         else {
+            // User Data ကို Real-time စောင့်ကြည့်မယ်
             db.ref('users/' + user.uid).on('value', s => {
                 const data = s.val();
-                currentUsername = data ? data.username : user.email.split('@')[0];
-                currentUserAvatar = data ? data.profilePic : "👤";
+                // နာမည်ကို Priority စဉ်မယ်- Database > DisplayName > Email
+                currentUsername = (data && data.username) ? data.username : (user.displayName || user.email.split('@')[0]);
+                currentUserAvatar = (data && data.profilePic) ? data.profilePic : "👤";
+                
                 document.getElementById('user-display').innerText = "အသုံးပြုသူ - " + currentUsername;
                 trackPresence(user);
                 load();
@@ -191,15 +199,27 @@
                 let repliesHTML = "";
                 if(p.replies) {
                     Object.values(p.replies).forEach(r => {
-                        repliesHTML += `<div style="font-size:12px; margin-top:8px; display:flex; align-items:center; gap:5px;"><span>${r.avatar||'👤'}</span> <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none; font-weight:bold;">@${r.u}:</a> <span>${r.m}</span></div>`;
+                        repliesHTML += `
+                        <div style="font-size:12px; margin-top:8px; display:flex; align-items:center; gap:8px;">
+                            <span>${r.avatar||'👤'}</span> 
+                            <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none; font-weight:bold;">@${r.u}:</a> 
+                            <span>${r.m}</span>
+                        </div>`;
                     });
                 }
                 const card = document.createElement('div');
                 card.className = "card";
                 card.innerHTML = `
-                    <div class="user"><div class="avatar">${p.avatar||'👤'}</div><a href="profile.html?id=${p.uid}">@${p.u}</a></div>
-                    <div class="title">${p.t}</div><p>${p.c}</p>
-                    <div class="action-bar"><span class="like-btn" onclick="like('${p.key}')">❤️ Like (${p.likes||0})</span><span style="cursor:pointer; color:#888;" onclick="reply('${p.key}')">💬 Reply</span></div>
+                    <div class="user">
+                        <div class="avatar">${p.avatar||'👤'}</div>
+                        <a href="profile.html?id=${p.uid}">@${p.u}</a>
+                    </div>
+                    <div class="title">${p.t}</div>
+                    <p style="font-size:14px; line-height:1.5;">${p.c}</p>
+                    <div class="action-bar">
+                        <span class="like-btn" onclick="like('${p.key}')">❤️ Like (${p.likes||0})</span>
+                        <span style="cursor:pointer; color:#888;" onclick="reply('${p.key}')">💬 Reply</span>
+                    </div>
                     <div class="reply-box">${repliesHTML}</div>`;
                 feed.appendChild(card);
             });
@@ -221,7 +241,7 @@
     }
 
     function logout() { 
-        if (confirm("လားပါဖို့ယာလား? (အားခါလာလည်ပါ)")) {
+        if (confirm("လားပါဖို့ယာလား?(အားကေလာလည်ပါ)")) {
             firebase.auth().signOut().then(() => window.location.href = "index.html");
         } 
     }
