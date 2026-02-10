@@ -189,24 +189,56 @@
     }
 
     function load() {
-        db.ref("posts").on("value", s => {
-            const feed = document.getElementById('feed'); feed.innerHTML = "";
-            let items = []; s.forEach(child => { items.push({ key: child.key, ...child.val() }); });
-            if (currentTab === 'latest') items.reverse();
-            else items.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    db.ref("posts").on("value", s => {
+        const feed = document.getElementById('feed');
+        feed.innerHTML = "";
+        let items = [];
+        s.forEach(child => { items.push({ key: child.key, ...child.val() }); });
 
-            items.forEach(p => {
+        if (currentTab === 'latest') items.reverse();
+        else items.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+
+        items.forEach(p => {
+            // ၁။ ပို့စ်ပိုင်ရှင်ရဲ့ ဒေတာကို Users ထဲမှာ သွားရှာမယ်
+            db.ref('users/' + p.uid).once('value', userSnap => {
+                const userData = userSnap.val() || {};
+                const name = userData.username || p.u; // နာမည်အသစ်မရှိရင် အဟောင်းသုံးမယ်
+                const avatar = userData.profilePic || "👤"; // အီမိုဂျီအသစ်မရှိရင် အဟောင်းသုံးမယ်
+
                 let repliesHTML = "";
                 if(p.replies) {
                     Object.values(p.replies).forEach(r => {
+                        // Reply ပြန်တဲ့သူတွေရဲ့ ဒေတာကိုလည်း Real-time ပြချင်ရင် ဒီမှာ ထပ်ယူရမယ်
+                        // ဒါပေမဲ့ လောလောဆယ် Reply က အရင်အတိုင်းပဲ ထားပေးထားပါတယ်
                         repliesHTML += `
                         <div style="font-size:12px; margin-top:8px; display:flex; align-items:center; gap:8px;">
-                            <span>${r.avatar||'👤'}</span> 
+                            <span>${r.avatar || '👤'}</span> 
                             <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none; font-weight:bold;">@${r.u}:</a> 
                             <span>${r.m}</span>
                         </div>`;
                     });
                 }
+
+                const card = document.createElement('div');
+                card.className = "card";
+                card.innerHTML = `
+                    <div class="user">
+                        <div class="avatar">${avatar}</div>
+                        <a href="profile.html?id=${p.uid}">@${name}</a>
+                    </div>
+                    <div class="title">${p.t}</div>
+                    <p style="font-size:14px; line-height:1.5;">${p.c}</p>
+                    <div class="action-bar">
+                        <span class="like-btn" onclick="like('${p.key}')">❤️ Like (${p.likes||0})</span>
+                        <span style="cursor:pointer; color:#888;" onclick="reply('${p.key}')">💬 Reply</span>
+                    </div>
+                    <div class="reply-box">${repliesHTML}</div>`;
+                
+                feed.appendChild(card);
+            });
+        });
+    });
+}
                 const card = document.createElement('div');
                 card.className = "card";
                 card.innerHTML = `
