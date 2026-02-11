@@ -68,27 +68,32 @@
 <canvas id="matrix-canvas"></canvas>
 
 <div class="nav">
-    <div class="nav-top">
-        <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
-    <img src="logo.png" alt="Logo" style="width: 35px; height: 35px; border-radius: 4px; border: 1px solid #00ff41;">
-        <div style="flex: 1;">
-            <b style="color:#00ff41; display: block; line-height: 1;">ARAKHA_FORUM</b>
-            <div style="font-size: 9px; color: #666; margin-top: 3px;">
-                ON: <span id="online-count">0</span> | TOT: <span id="total-count">0</span>
+    <div class="nav-top" style="display: flex; justify-content: space-between; align-items: center;">
+        
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 35px; height: 35px; background: #111; border: 1px solid #00ff41; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                🅰️
+            </div>
+            
+            <div>
+                <b style="color:#00ff41; display: block; line-height: 1; font-size: 14px;">ARAKHA_FORUM</b>
+                <div style="font-size: 9px; color: #666; margin-top: 3px;">
+                    ON: <span id="online-count">0</span> | TOT: <span id="total-count">0</span>
+                </div>
             </div>
         </div>
 
-        <div class="nav-right">
-            <div id="user-display" style="color: #00ff41; font-weight: bold; font-size: 11px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+            <div id="user-display" style="color: #00ff41; font-weight: bold; font-size: 10px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 </div>
             <div style="display: flex; gap: 5px;">
-                <button onclick="goToProfile()" style="background:transparent; border:1px solid #00ff41; color:#00ff41; padding:5px 10px; cursor: pointer; border-radius: 4px;">PROFILE</button>
-                <button onclick="logout()" style="background:#ff4444; color:#fff; border:none; padding:5px 10px; cursor: pointer; border-radius: 4px;">LOGOUT</button>
+                <button onclick="goToProfile()" style="background:transparent; border:1px solid #00ff41; color:#00ff41; padding:4px 8px; font-size: 9px; cursor: pointer; border-radius: 4px;">PROFILE</button>
+                <button onclick="logout()" style="background:#ff4444; color:#fff; border:none; padding:4px 8px; font-size: 9px; cursor: pointer; border-radius: 4px;">LOGOUT</button>
             </div>
         </div>
     </div>
 
-    <div class="nav-tabs">
+    <div class="nav-tabs" style="display: flex; gap: 15px; border-top: 1px solid #222; padding-top: 8px; margin-top: 10px;">
         <div class="tab active" id="tab-latest" onclick="switchTab('latest')">နောက်ဆုံးတင်ခစာ</div>
         <div class="tab" id="tab-popular" onclick="switchTab('popular')">နာမည်ကြီး</div>
     </div>
