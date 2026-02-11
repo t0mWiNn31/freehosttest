@@ -3,41 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arakha Tech Amataurs - Login</title>
+    <title>Arakha Tech Amateurs - Login</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-         #matrixCanvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1; 
-    background-color: black;
-}
-        body { background: #050505; color: #00ff41; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; flex-direction: column; }
-        .card { background: #0a0a0a; padding: 30px; border: 1px solid #333; box-shadow: 0 0 15px #00ff4133; width: 320px; text-align: center; border-radius: 4px; }
-        input { width: 100%; background: #000; border: 1px solid #222; color: #00ff41; padding: 12px; margin-bottom: 10px; outline: none; box-sizing: border-word; }
-        button { width: 100%; background: #00ff41; color: #000; border: none; padding: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 10px; }
-        button:hover { background: #00cc33; box-shadow: 0 0 10px #00ff41; }
-        .toggle { font-size: 12px; color: #555; cursor: pointer; margin-top: 15px; display: block; text-decoration: underline; }
+        #matrixCanvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; 
+            background-color: black;
+        }
+        body { 
+            background: #050505; color: #00ff41; 
+            font-family: 'Courier New', monospace; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; margin: 0; flex-direction: column; 
+        }
+        .card { 
+            background: rgba(10, 10, 10, 0.9); 
+            padding: 30px; border: 1px solid #00ff41; 
+            box-shadow: 0 0 15px #00ff4133; 
+            width: 320px; text-align: center; border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+        /* Input & Button Styles Optimized */
+        input { 
+            width: 100%; background: #000; border: 1px solid #333; 
+            color: #00ff41; padding: 12px; margin-bottom: 15px; 
+            outline: none; box-sizing: border-box; border-radius: 4px;
+        }
+        input:focus { border-color: #00ff41; box-shadow: 0 0 5px #00ff41; }
         
-        .flag-container { margin-bottom: 20px; animation: fadeIn 2s; }
-        .flag-img { width: 120px; height: auto; border: 1px solid #333; box-shadow: 0 0 15px rgba(0, 255, 65, 0.2); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        button { 
+            width: 100%; background: #00ff41; color: #000; 
+            border: none; padding: 12px; cursor: pointer; 
+            font-weight: bold; transition: 0.3s; border-radius: 4px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        button:hover { background: #00cc33; box-shadow: 0 0 15px #00ff41; }
+        
+        .toggle { font-size: 12px; color: #888; cursor: pointer; margin-top: 15px; display: block; }
+        .toggle:hover { color: #00ff41; text-decoration: underline; }
+        
+        .flag-container { margin-bottom: 20px; }
+        .flag-img { width: 100px; height: auto; filter: drop-shadow(0 0 10px rgba(0, 255, 65, 0.3)); }
     </style>
 </head>
 <body>
     <canvas id="matrixCanvas"></canvas>
+    
     <div class="flag-container">
         <img src="homeflag.svg" alt="Flag" class="flag-img">
     </div>
 
     <div class="card">
-        <h2 id="form-title">သာလီစွပါ</h2>
-        <h2 id="form-sub-title">အာရက္ခပြည်သားရို့</h2>
+        <h2 id="form-title" style="margin-bottom: 5px;">သာလီစွပါ</h2>
+        <p id="form-sub-title" style="margin-top: 0; font-size: 14px; color: #888;">အာရက္ခပြည်သားရို့</p>
+        
         <div id="reg-fields" style="display:none;">
             <input type="text" id="username" placeholder="USER_NAME">
         </div>
@@ -45,127 +68,89 @@
         <input type="password" id="pass" placeholder="PASSWORD">
         
         <button onclick="handleAuth()" id="main-btn">LOGIN</button>
-        <span class="toggle" onclick="toggleForm()" id="toggle-text">အကောင့်အသစ်ဖွင့်လို့ရပါ‌ရေ</span>
+        <span class="toggle" onclick="toggleForm()" id="toggle-text">အကောင့်အသစ်ဖွင့်ဖို့ယာလား?</span>
     </div>
 
-    <div style="font-size: 12px; color: #888; margin-top: 20px;">
-        USERS_REGISTERED: <span id="total-users" style="color: #00ff41;">...</span>
+    <div style="font-size: 11px; color: #555; margin-top: 20px; letter-spacing: 1px;">
+        TOTAL_USERS_REGISTERED: <span id="total-users" style="color: #00ff41;">0</span>
     </div>
 
 <script>
-   
+    // --- Firebase Init ---
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow", 
         authDomain: "firstarakha.firebaseapp.com",
         databaseURL: "https://firstarakha-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "firstarakha",
-        storageBucket: "firstarakha.firebasestorage.app",
-        messagingSenderId: "4263070909",
         appId: "1:4263070909:web:ef4e4a2c0891be1f49bbd4"
     };
     firebase.initializeApp(config);
     const db = firebase.database();
     let isRegister = false;
 
-   
-    async function askAI(userMessage) {
-        try {
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMessage })
-            });
-            const data = await response.json();
-            return data.reply;
-        } catch (error) {
-            console.error("Error:", error);
-            return "ဗျာလ် ဆာဗာနဲ့ ချိတ်လို့မရဖစ်နိန်ပါရေ";
-        }
-    }
-
-   
+    // --- Auth Logic ---
     function toggleForm() {
         isRegister = !isRegister;
         document.getElementById('reg-fields').style.display = isRegister ? 'block' : 'none';
-        document.getElementById('form-title').innerText = isRegister ? 'CREATE ACCOUNT' : 'သာလီစွပါ';
-        document.getElementById('main-btn').innerText = isRegister ? 'REGISTER' : 'LOGIN';
-        document.getElementById('toggle-text').innerText = isRegister ? 'အကောင့်ဟိပြီးသားလား? ဝင်ပါ' : 'အကောင့်အသစ်ဖွင့်ပါ';
+        document.getElementById('form-title').innerText = isRegister ? 'REGISTER' : 'သာလီစွပါ';
+        document.getElementById('main-btn').innerText = isRegister ? 'SIGN UP' : 'LOGIN';
+        document.getElementById('toggle-text').innerText = isRegister ? 'အကောင့်ဟိပြီးသားလား? ဝင်ပါ' : 'အကောင့်အသစ်ဖွင့်ဖို့ယာလား?';
     }
 
- 
     function handleAuth() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('pass').value;
         const u = document.getElementById('username').value;
 
         if (isRegister) {
-            if(!u) return alert("Username ထည့်ပါ!");
+            if(!u || !e || !p) return alert("အချက်အလက်အားလုံး ဖြည့်စွက်ပါ!");
             firebase.auth().createUserWithEmailAndPassword(e, p).then((res) => {
-                db.ref('users/' + res.user.uid).set({ username: u });
+                db.ref('users/' + res.user.uid).set({ username: u, email: e });
                 window.location.href = "forum.html";
             }).catch(err => alert(err.message));
         } else {
+            if(!e || !p) return alert("Email နှင့် Password ဖြည့်ပါ!");
             firebase.auth().signInWithEmailAndPassword(e, p).then(() => {
                 window.location.href = "forum.html";
             }).catch(err => alert(err.message));
         }
     }
 
-   
-    firebase.auth().onAuthStateChanged(user => { 
-        if(user) window.location.href = "forum.html"; 
-    });
+    // Auto Redirect if logged in
+    firebase.auth().onAuthStateChanged(user => { if(user) window.location.href = "forum.html"; });
 
-  
+    // Count Users
     db.ref('users').on('value', s => {
         document.getElementById('total-users').innerText = s.numChildren() || 0;
     });
+
+    // --- Matrix Animation ---
     const canvas = document.getElementById('matrixCanvas');
-const ctx = canvas.getContext('2d');
-
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-
-const letters = "ARAKHA010101";
-const fontSize = 16;
-const columns = canvas.width / fontSize;
-
-
-const drops = [];
-for (let i = 0; i < columns; i++) {
-    drops[i] = 1;
-}
-
-function drawMatrix() {
-  
-    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#0F0"; // 
-    ctx.font = fontSize + "px monospace";
-
-    for (let i = 0; i < drops.length; i++) {
-        const text = letters.charAt(Math.floor(Math.random() * letters.length));
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-      
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-            drops[i] = 0;
-        }
-        drops[i]++;
-    }
-}
-
-
-setInterval(drawMatrix, 33);
-
-
-window.addEventListener('resize', () => {
+    const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-});
+
+    const letters = "ARAKHA010101";
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#0F0";
+        ctx.font = fontSize + "px monospace";
+        for (let i = 0; i < drops.length; i++) {
+            const text = letters.charAt(Math.floor(Math.random() * letters.length));
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        }
+    }
+    setInterval(drawMatrix, 40);
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    });
 </script>
 </body>
 </html>
