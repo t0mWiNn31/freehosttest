@@ -82,6 +82,10 @@
     <div style="font-size: 11px; color: #555; margin-top: 20px; letter-spacing: 1px;">
         TOTAL_USERS_REGISTERED: <span id="total-users" style="color: #00ff41;">0</span>
     </div>
+    <div id="installContainer" style="display: none; text-align: center; padding: 10px; background: #111; border: 1px solid #00ff41; margin: 10px; border-radius: 8px;">
+    <p style="color: #00ff41; margin-bottom: 8px; font-size: 14px;">App အဖြစ် သုံးချင်ပါသလား?</p>
+    <button id="installBtn" style="background: #00ff41; color: #000; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Install Now</button>
+</div>
 
 <script>
     // --- Firebase Init ---
@@ -159,6 +163,35 @@
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
     });
+    let deferredPrompt;
+const installContainer = document.getElementById('installContainer');
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Browser ရဲ့ default pop-up ကို ခဏတားထားမယ်
+    e.preventDefault();
+    deferredPrompt = e;
+    // ကိုယ်တိုင်လုပ်ထားတဲ့ Install ခလုတ်လေးကို ပြပေးမယ်
+    installContainer.style.display = 'block';
+});
+
+installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        // Install လုပ်မလားလို့ မေးမယ်
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response: ${outcome}`);
+        // တစ်ခါနှိပ်ပြီးရင် ခလုတ်ကို ပြန်ဖျောက်မယ်
+        deferredPrompt = null;
+        installContainer.style.display = 'none';
+    }
+});
+
+// App ကို install လုပ်ပြီးသွားရင် ခလုတ်ကို အပြီးဖျောက်လိုက်မယ်
+window.addEventListener('appinstalled', () => {
+    installContainer.style.display = 'none';
+    console.log('App was installed');
+});
 </script>
 </body>
 </html>
