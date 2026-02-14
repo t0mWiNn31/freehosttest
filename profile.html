@@ -160,9 +160,19 @@
     });
 
     // Chat ကို သွားမယ့် Function
-    function goToChat() {
-        window.location.href = "chat.html";
+  // Profile.html ရဲ့ Script အပိုင်း
+function goToChat() {
+    // လက်ရှိကြည့်နေတဲ့ Profile ရဲ့ ID ကို ယူမယ်
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewId = urlParams.get('id'); 
+    
+    // တကယ်လို့ viewId မရှိရင် (ကိုယ့် Profile ကိုယ်ပြန်ကြည့်နေရင်) chat သွားလို့မရအောင် တားထားမယ်
+    if (viewId) {
+        window.location.href = "chat.html?id=" + viewId;
+    } else {
+        alert("ဒါက ကိုယ့် Profile ကြီးလေ ကိုကိုရဲ့... တခြားလူကို အရင်ရွေးပါဦး။");
     }
+}
 
     // --- Save & Upload Functions ---
     async function uploadAvatar(input) {
