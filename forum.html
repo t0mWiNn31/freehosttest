@@ -15,16 +15,26 @@
         .nav { background: rgba(17, 17, 17, 0.9); backdrop-filter: blur(10px); padding: 10px; border-bottom: 1px solid #00ff41; position: sticky; top: 0; z-index: 100; }
         .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .nav-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
-        .nav-tabs { display: flex; gap: 15px; border-top: 1px solid #222; padding-top: 8px; }
-        .tab { font-size: 12px; color: #888; cursor: pointer; padding: 5px 0; }
+        
+        /* ခလုတ်များ တစ်တန်းတည်းဖြစ်စေရန် */
+        .nav-bar-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 8px; }
+        .nav-tabs { display: flex; gap: 15px; }
+        .tab { font-size: 12px; color: #888; cursor: pointer; padding: 5px 0; white-space: nowrap; }
         .tab.active { color: #00ff41; border-bottom: 2px solid #00ff41; }
+
+        .msg-btn { 
+            position: relative; background: #222; color: #00ff41; border: 1px solid #00ff41; 
+            padding: 5px 12px; border-radius: 20px; font-size: 10px; cursor: pointer; font-weight: bold;
+        }
+        .dm-dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: red; border-radius: 50%; border: 2px solid #000; display: none; }
 
         @media (max-width: 480px) {
             b { font-size: 13px; }
             #user-display { font-size: 10px; }
-            .nav-tabs { display: flex; justify-content: center; gap: 30px; border-top: 1px solid #222; padding-top: 8px; margin-top: 8px; }
             .tab { font-size: 11px; }
+            .nav-tabs { gap: 15px; }
             button { padding: 4px 8px !important; font-size: 9px !important; }
+            .msg-btn { padding: 4px 10px; font-size: 9px; }
         }
 
         .container { max-width: 700px; margin: 20px auto; padding: 10px; position: relative; z-index: 1; }
@@ -50,7 +60,6 @@
 
 <div class="nav">
     <div class="nav-top">
-        
         <div style="display: flex; align-items: center; gap: 10px;">
             <img src="logo.png" alt="Logo" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #00ff41;">
             <div>
@@ -69,16 +78,16 @@
             </div>
         </div>
     </div>
-    <div class="nav-bar">
-    <button onclick="window.location.href='chat_list.html'" style="position: relative; background: #222; color: #00ff41; border: 1px solid #00ff41; padding: 8px 15px; border-radius: 20px;">
-        💬 MESSAGES 
-        <span id="dm-alert" style="display:none; position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: red; border-radius: 50%;"></span>
-    </button>
-</div>
 
-    <div class="nav-tabs">
-        <div class="tab active" id="tab-latest" onclick="switchTab('latest')">နောက်ဆုံးတင်ခစာ</div>
-        <div class="tab" id="tab-popular" onclick="switchTab('popular')">နာမည်ကြီး</div>
+    <div class="nav-bar-row">
+        <div class="nav-tabs">
+            <div class="tab active" id="tab-latest" onclick="switchTab('latest')">နောက်ဆုံးတင်ခစာ</div>
+            <div class="tab" id="tab-popular" onclick="switchTab('popular')">နာမည်ကြီး</div>
+        </div>
+        <button class="msg-btn" onclick="window.location.href='chat_list.html'">
+            💬 MESSAGES 
+            <span id="dm-alert" class="dm-dot"></span>
+        </button>
     </div>
 </div>
 
@@ -184,64 +193,59 @@
         renderFeed();
     });
 
-   function renderFeed() {
-    const feed = document.getElementById('feed');
-    feed.innerHTML = "";
-    let items = [...postsData];
-    if (currentTab === 'latest') items.reverse();
-    else items.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    function renderFeed() {
+        const feed = document.getElementById('feed');
+        feed.innerHTML = "";
+        let items = [...postsData];
+        if (currentTab === 'latest') items.reverse();
+        else items.sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
-    items.forEach(p => {
-        const user = userDataCache[p.uid] || {};
-        const isOnline = user.isOnline ? '<span class="online-dot" title="Online"></span>' : '';
-        const badge = user.role === 'admin' ? '<span class="badge">DEV</span>' : '';
-        
-        // --- Reply ပိုင်းကို ဒီနေရာမှာ အသေအချာ ပြင်ထားပါတယ် ---
-        let repliesHTML = "";
-        if (p.replies) {
-            Object.values(p.replies).forEach(r => {
-                const rU = userDataCache[r.uid] || {};
-                
-                // Reply အတွက် Avatar Logic (Link ဖြစ်နေရင် img နဲ့ပြမယ်)
-                let replyAvatar;
-                if (rU.profilePic && rU.profilePic.startsWith('http')) {
-                    replyAvatar = `<img src="${rU.profilePic}" style="width:20px; height:20px; border-radius:50%; object-fit:cover; vertical-align:middle; border:1px solid #444;">`;
-                } else {
-                    replyAvatar = `<span style="font-size:14px; vertical-align:middle;">${rU.profilePic || '👤'}</span>`;
-                }
+        items.forEach(p => {
+            const user = userDataCache[p.uid] || {};
+            const isOnline = user.isOnline ? '<span class="online-dot" title="Online"></span>' : '';
+            const badge = user.role === 'admin' ? '<span class="badge">DEV</span>' : '';
+            
+            let repliesHTML = "";
+            if (p.replies) {
+                Object.values(p.replies).forEach(r => {
+                    const rU = userDataCache[r.uid] || {};
+                    let replyAvatar = rU.profilePic && rU.profilePic.startsWith('http') ? 
+                        `<img src="${rU.profilePic}" style="width:20px; height:20px; border-radius:50%; object-fit:cover; vertical-align:middle; border:1px solid #444;">` : 
+                        `<span style="font-size:14px; vertical-align:middle;">${rU.profilePic || '👤'}</span>`;
 
-                repliesHTML += `
-                    <div style="margin-top:8px; font-size:13px; color:#ccc;">
-                        ${replyAvatar} 
-                        <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none; font-weight:bold;">
-                            @${rU.username || r.u}:
-                        </a> 
-                        <span style="color:#eee;">${r.m}</span>
-                    </div>`;
-            });
-        }
+                    repliesHTML += `
+                        <div style="margin-top:8px; font-size:13px; color:#ccc;">
+                            ${replyAvatar} 
+                            <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none; font-weight:bold;">
+                                @${rU.username || r.u}:
+                            </a> 
+                            <span style="color:#eee;">${r.m}</span>
+                        </div>`;
+                });
+            }
 
-        const card = document.createElement('div');
-        card.className = "card";
-        card.innerHTML = `
-            <div class="user">
-                ${getAvatarHTML(user)}
-                <div>
-                    <a href="profile.html?id=${p.uid}">@${user.username || p.u}</a> ${isOnline} ${badge}
-                    <div style="font-size:9px; color:#555;">${new Date(p.time).toLocaleString()}</div>
+            const card = document.createElement('div');
+            card.className = "card";
+            card.innerHTML = `
+                <div class="user">
+                    ${getAvatarHTML(user)}
+                    <div>
+                        <a href="profile.html?id=${p.uid}">@${user.username || p.u}</a> ${isOnline} ${badge}
+                        <div style="font-size:9px; color:#555;">${new Date(p.time).toLocaleString()}</div>
+                    </div>
                 </div>
-            </div>
-            <div style="color:#fff; font-weight:bold; margin-bottom:5px; font-size:18px;">${p.t}</div>
-            <p style="margin:0; font-size:14px; line-height:1.5;">${formatText(p.c, p.key)}</p>
-            ${p.img ? `<img src="${p.img}" style="width:100%; border-radius:8px; margin-top:10px; border:1px solid #333;">` : ''}
-            <div style="margin-top:10px; font-size:12px; display:flex; gap:15px;">
-                <span style="color:#00ff41; cursor:pointer;" onclick="like('${p.key}')">❤️ Like (${p.likes || 0})</span>
-                <span style="color:#888; cursor:pointer;" onclick="reply('${p.key}')">💬 Reply</span>
-            </div>
-            <div class="reply-box">${repliesHTML}</div>`;
-        feed.appendChild(card);
-    });
-}
+                <div style="color:#fff; font-weight:bold; margin-bottom:5px; font-size:18px;">${p.t}</div>
+                <p style="margin:0; font-size:14px; line-height:1.5;">${formatText(p.c, p.key)}</p>
+                ${p.img ? `<img src="${p.img}" style="width:100%; border-radius:8px; margin-top:10px; border:1px solid #333;">` : ''}
+                <div style="margin-top:10px; font-size:12px; display:flex; gap:15px;">
+                    <span style="color:#00ff41; cursor:pointer;" onclick="like('${p.key}')">❤️ Like (${p.likes || 0})</span>
+                    <span style="color:#888; cursor:pointer;" onclick="reply('${p.key}')">💬 Reply</span>
+                </div>
+                <div class="reply-box">${repliesHTML}</div>`;
+            feed.appendChild(card);
+        });
+    }
+
     // --- 5. Actions ---
     function showPreview(input) {
         if (input.files && input.files[0]) {
@@ -300,7 +304,7 @@
     }
     function goToProfile() { const u = firebase.auth().currentUser; if(u) window.location.href = "profile.html?id=" + u.uid; }
 
-    // --- 6. Auth & Presence ---
+    // --- 6. Auth & Presence & DM Notification ---
     firebase.auth().onAuthStateChanged(user => {
         if (!user) window.location.href = "index.html";
         else {
@@ -310,6 +314,18 @@
             sRef.on('value', s => { 
                 const data = s.val() || {};
                 document.getElementById('user-display').innerText = "အသုံးပြုသူ - " + (data.username || user.email.split('@')[0]); 
+            });
+
+            // စာအသစ်ဝင်လျှင် အနီစက်ပြရန်
+            db.ref('dms').on('value', snapshot => {
+                let hasNew = false;
+                snapshot.forEach(room => {
+                    if (room.key.includes(user.uid)) {
+                        const msgs = Object.values(room.val());
+                        if (msgs[msgs.length - 1].sender !== user.uid) hasNew = true;
+                    }
+                });
+                document.getElementById('dm-alert').style.display = hasNew ? 'block' : 'none';
             });
         }
     });
