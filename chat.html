@@ -30,9 +30,10 @@
             border-right: 1px solid #1a1a1a; 
         }
         
+        /* Header */
         .terminal-header { 
             background: #111; 
-            padding: 12px 15px; 
+            padding: 10px 15px; 
             display: flex; 
             align-items: center; 
             gap: 12px; 
@@ -44,16 +45,26 @@
             color: #00ff41; 
             padding: 5px 10px; 
             cursor: pointer; 
-            font-size: 12px; 
+            font-size: 11px; 
             border-radius: 4px;
             text-decoration: none;
         }
-        #header-avatar-container { display: flex; align-items: center; justify-content: center; }
-        #chat-with-avatar { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #00ff41; object-fit: cover; }
-        #title { font-size: 11px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #00ff41; }
-        .status-dot { width: 8px; height: 8px; background: #333; border-radius: 50%; }
+        #chat-with-avatar { 
+            width: 35px; 
+            height: 35px; 
+            border-radius: 50%; 
+            border: 1px solid #00ff41; 
+            object-fit: cover; 
+            background: #000;
+        }
+        #title-container { flex: 1; display: flex; flex-direction: column; }
+        #title { font-size: 13px; font-weight: bold; color: #00ff41; }
+        #status-text { font-size: 9px; opacity: 0.6; }
+
+        .status-dot { width: 10px; height: 10px; background: #333; border-radius: 50%; }
         .status-online { background: #00ff41; box-shadow: 0 0 8px #00ff41; }
 
+        /* Messages */
         #messages { 
             flex: 1; 
             overflow-y: auto; 
@@ -61,8 +72,7 @@
             display: flex; 
             flex-direction: column; 
             gap: 15px;
-            background-image: linear-gradient(rgba(0, 255, 65, 0.02) 1px, transparent 1px);
-            background-size: 100% 20px;
+            background: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)), url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
         }
 
         .msg-row { display: flex; gap: 10px; max-width: 85%; }
@@ -71,17 +81,18 @@
         
         .bubble { 
             padding: 10px 14px; 
-            border-radius: 12px; 
+            border-radius: 15px; 
             font-size: 14px; 
             word-break: break-word; 
             line-height: 1.4; 
-            position: relative; 
         }
-        .mine .bubble { color: #fff; background: rgba(0, 255, 65, 0.2); border: 1px solid #00ff41; border-bottom-right-radius: 2px; }
+        .mine .bubble { color: #fff; background: #004d1a; border: 1px solid #00ff41; border-bottom-right-radius: 2px; }
         .others .bubble { color: #00ff41; background: #1a1a1a; border: 1px solid #333; border-bottom-left-radius: 2px; }
         
-        .time-tag { font-size: 8px; opacity: 0.5; margin-top: 5px; display: block; text-align: right; }
+        .time-tag { font-size: 8px; opacity: 0.5; margin-top: 5px; display: block; }
+        .mine .time-tag { text-align: right; }
 
+        /* Input Area */
         .input-area { 
             padding: 15px; 
             background: #111; 
@@ -95,7 +106,7 @@
             background: #000; 
             border: 1px solid #333; 
             color: #00ff41; 
-            padding: 12px 15px; 
+            padding: 12px 18px; 
             outline: none; 
             border-radius: 25px; 
             font-size: 14px; 
@@ -106,8 +117,8 @@
             background: #00ff41; 
             color: #000; 
             border: none; 
-            width: 40px; 
-            height: 40px; 
+            width: 42px; 
+            height: 42px; 
             border-radius: 50%; 
             font-weight: bold; 
             cursor: pointer; 
@@ -115,7 +126,9 @@
             align-items: center; 
             justify-content: center;
             flex-shrink: 0;
+            transition: 0.2s;
         }
+        button#sendBtn:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
@@ -123,8 +136,13 @@
 <div class="terminal-container">
     <div class="terminal-header">
         <a href="forum.html" class="back-btn">BACK</a>
-        <div id="header-avatar-container"></div>
-        <div id="title">INITIALIZING...</div>
+        <div id="header-avatar-container">
+            <div id="chat-with-avatar" style="display: flex; align-items: center; justify-content: center; font-size: 20px;">👤</div>
+        </div>
+        <div id="title-container">
+            <div id="title">SECURE_CHANNEL</div>
+            <div id="status-text">OFFLINE</div>
+        </div>
         <div id="status-dot" class="status-dot"></div>
     </div>
 
@@ -155,52 +173,60 @@
         if (!user) {
             window.location.replace("index.html");
         } else {
-            updatePresence(user.uid);
+            // ကိုယ့် Online Status ကို Update လုပ်မယ်
+            const myPresence = db.ref('users/' + user.uid);
+            myPresence.update({ isOnline: true, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+            myPresence.onDisconnect().update({ isOnline: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+
             if (targetUid) {
                 document.getElementById('input-container').style.display = 'flex';
                 setupChat(user.uid, targetUid);
             } else {
-                document.getElementById('title').innerText = "SYSTEM::SELECT_USER";
-                document.getElementById('messages').innerHTML = `
-                    <div style="text-align:center; margin-top:50px; opacity:0.6;">
-                        <p>စကားပြောမည့်သူ မရွေးရသေးပါ။</p>
-                        <p style="font-size:12px; margin-top:10px;">ဖိုရမ်ထဲမှ User တစ်ဦး၏ Profile ကိုနှိပ်၍ စာပို့ပါရှင်။</p>
-                    </div>`;
+                document.getElementById('title').innerText = "SYSTEM::ERROR";
+                document.getElementById('messages').innerHTML = `<div style="text-align:center; margin-top:50px; opacity:0.5;">စကားပြောရန် User တစ်ဦးကို အရင်ရွေးချယ်ပါရှင်။</div>`;
             }
         }
     });
 
-    function updatePresence(uid) {
-        const pRef = db.ref('users/' + uid);
-        pRef.update({ isOnline: true, lastSeen: firebase.database.ServerValue.TIMESTAMP });
-        pRef.onDisconnect().update({ isOnline: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
-    }
-
     function setupChat(myUid, toUid) {
+        // Room ID ဖန်တီးခြင်း
         const roomId = myUid < toUid ? myUid + "_" + toUid : toUid + "_" + myUid;
 
-        // တစ်ဖက်လူ Profile ယူမယ်
+        // ၁။ တစ်ဖက်လူ Profile ကို အမြဲစောင့်ကြည့်ခြင်း
         db.ref('users/' + toUid).on('value', snap => {
             const data = snap.val() || {};
-            document.getElementById('title').innerText = "DM::" + (data.username || "UNKNOWN").toUpperCase();
             
-            const avatarContainer = document.getElementById('header-avatar-container');
+            // နာမည်ပြမယ်
+            document.getElementById('title').innerText = (data.username || "User").toUpperCase();
+            
+            // Avatar ပြမယ်
+            const avatarBox = document.getElementById('header-avatar-container');
             if(data.profilePic && data.profilePic.startsWith('http')) {
-                avatarContainer.innerHTML = `<img src="${data.profilePic}" id="chat-with-avatar">`;
+                avatarBox.innerHTML = `<img src="${data.profilePic}" id="chat-with-avatar">`;
             } else {
-                avatarContainer.innerHTML = `<div style="font-size:20px;">${data.profilePic || '👤'}</div>`;
+                avatarBox.innerHTML = `<div id="chat-with-avatar" style="display: flex; align-items: center; justify-content: center; font-size: 20px;">${data.profilePic || '👤'}</div>`;
             }
 
+            // Online Status & Dot
             const dot = document.getElementById('status-dot');
-            if(data.isOnline) dot.classList.add('status-online');
-            else dot.classList.remove('status-online');
+            const statusTxt = document.getElementById('status-text');
+            if(data.isOnline === true) {
+                dot.classList.add('status-online');
+                statusTxt.innerText = "ONLINE_NOW";
+                statusTxt.style.color = "#00ff41";
+            } else {
+                dot.classList.remove('status-online');
+                statusTxt.innerText = "LAST_SEEN: " + (data.lastSeen ? new Date(data.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "OFFLINE");
+                statusTxt.style.color = "#666";
+            }
         });
 
-        // မက်ဆေ့တွေ နားထောင်မယ်
-        db.ref("dms/" + roomId).off();
-        db.ref("dms/" + roomId).limitToLast(50).on("child_added", snap => {
+        // ၂။ စာဟောင်းများနှင့် စာအသစ်များကို ဆွဲထုတ်ခြင်း
+        const msgDiv = document.getElementById('messages');
+        msgDiv.innerHTML = ""; // ရှင်းထုတ်မယ်
+
+        db.ref("dms/" + roomId).on("child_added", snap => {
             const data = snap.val();
-            const msgDiv = document.getElementById('messages');
             const isMine = data.sender === myUid;
             const timeStr = new Date(data.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -215,9 +241,10 @@
                 </div>
             `;
             msgDiv.appendChild(div);
-            msgDiv.scrollTop = msgDiv.scrollHeight;
+            msgDiv.scrollTop = msgDiv.scrollHeight; // အောက်ဆုံးကို ဆွဲချမယ်
         });
 
+        // ၃။ စာပို့ခြင်း
         window.send = function() {
             const txt = document.getElementById('msg').value.trim();
             if(txt) {
