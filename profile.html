@@ -75,12 +75,13 @@
         <textarea id="bio" rows="2" placeholder="ကိုယ့်အကြောင်း..."></textarea>
     </div>
     
+   <div style="display: flex; gap: 10px; flex-direction: column;">
     <button onclick="saveProfile()" id="saveBtn">UPDATE PROFILE</button>
-    <button class="back-btn" onclick="window.location.href='forum.html'">BACK TO FORUM</button>
     
-    <div id="status"></div>
+    <button id="msgBtn" style="background: #0084ff; color: #fff; display: none;" onclick="goToChat()">MESSAGE</button>
+    
+    <button class="back-btn" onclick="window.location.href='forum.html'">BACK TO FORUM</button>
 </div>
-
 <script>
     // --- Firebase Setup ---
     const config = {
