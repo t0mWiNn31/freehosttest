@@ -177,48 +177,64 @@
         renderFeed();
     });
 
-    function renderFeed() {
-        const feed = document.getElementById('feed');
-        feed.innerHTML = "";
-        let items = [...postsData];
-        if (currentTab === 'latest') items.reverse();
-        else items.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+   function renderFeed() {
+    const feed = document.getElementById('feed');
+    feed.innerHTML = "";
+    let items = [...postsData];
+    if (currentTab === 'latest') items.reverse();
+    else items.sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
-        items.forEach(p => {
-            const user = userDataCache[p.uid] || {};
-            const isOnline = user.isOnline ? '<span class="online-dot" title="Online"></span>' : '';
-            const badge = user.role === 'admin' ? '<span class="badge">DEV</span>' : '';
-            
-            let repliesHTML = "";
-            if (p.replies) {
-                Object.values(p.replies).forEach(r => {
-                    const rU = userDataCache[r.uid] || {};
-                    repliesHTML += `<div style="margin-top:8px;">${rU.profilePic || '👤'} <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none;">@${rU.username || r.u}:</a> ${r.m}</div>`;
-                });
-            }
+    items.forEach(p => {
+        const user = userDataCache[p.uid] || {};
+        const isOnline = user.isOnline ? '<span class="online-dot" title="Online"></span>' : '';
+        const badge = user.role === 'admin' ? '<span class="badge">DEV</span>' : '';
+        
+        // --- Reply ပိုင်းကို ဒီနေရာမှာ အသေအချာ ပြင်ထားပါတယ် ---
+        let repliesHTML = "";
+        if (p.replies) {
+            Object.values(p.replies).forEach(r => {
+                const rU = userDataCache[r.uid] || {};
+                
+                // Reply အတွက် Avatar Logic (Link ဖြစ်နေရင် img နဲ့ပြမယ်)
+                let replyAvatar;
+                if (rU.profilePic && rU.profilePic.startsWith('http')) {
+                    replyAvatar = `<img src="${rU.profilePic}" style="width:20px; height:20px; border-radius:50%; object-fit:cover; vertical-align:middle; border:1px solid #444;">`;
+                } else {
+                    replyAvatar = `<span style="font-size:14px; vertical-align:middle;">${rU.profilePic || '👤'}</span>`;
+                }
 
-            const card = document.createElement('div');
-            card.className = "card";
-            card.innerHTML = `
-                <div class="user">
-                    ${getAvatarHTML(user)}
-                    <div>
-                        <a href="profile.html?id=${p.uid}">@${user.username || p.u}</a> ${isOnline} ${badge}
-                        <div style="font-size:9px; color:#555;">${new Date(p.time).toLocaleString()}</div>
-                    </div>
+                repliesHTML += `
+                    <div style="margin-top:8px; font-size:13px; color:#ccc;">
+                        ${replyAvatar} 
+                        <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none; font-weight:bold;">
+                            @${rU.username || r.u}:
+                        </a> 
+                        <span style="color:#eee;">${r.m}</span>
+                    </div>`;
+            });
+        }
+
+        const card = document.createElement('div');
+        card.className = "card";
+        card.innerHTML = `
+            <div class="user">
+                ${getAvatarHTML(user)}
+                <div>
+                    <a href="profile.html?id=${p.uid}">@${user.username || p.u}</a> ${isOnline} ${badge}
+                    <div style="font-size:9px; color:#555;">${new Date(p.time).toLocaleString()}</div>
                 </div>
-                <div style="color:#fff; font-weight:bold; margin-bottom:5px; font-size:18px;">${p.t}</div>
-                <p style="margin:0; font-size:14px; line-height:1.5;">${formatText(p.c, p.key)}</p>
-                ${p.img ? `<img src="${p.img}" style="width:100%; border-radius:8px; margin-top:10px; border:1px solid #333;">` : ''}
-                <div style="margin-top:10px; font-size:12px; display:flex; gap:15px;">
-                    <span style="color:#00ff41; cursor:pointer;" onclick="like('${p.key}')">❤️ Like (${p.likes || 0})</span>
-                    <span style="color:#888; cursor:pointer;" onclick="reply('${p.key}')">💬 Reply</span>
-                </div>
-                <div class="reply-box">${repliesHTML}</div>`;
-            feed.appendChild(card);
-        });
-    }
-
+            </div>
+            <div style="color:#fff; font-weight:bold; margin-bottom:5px; font-size:18px;">${p.t}</div>
+            <p style="margin:0; font-size:14px; line-height:1.5;">${formatText(p.c, p.key)}</p>
+            ${p.img ? `<img src="${p.img}" style="width:100%; border-radius:8px; margin-top:10px; border:1px solid #333;">` : ''}
+            <div style="margin-top:10px; font-size:12px; display:flex; gap:15px;">
+                <span style="color:#00ff41; cursor:pointer;" onclick="like('${p.key}')">❤️ Like (${p.likes || 0})</span>
+                <span style="color:#888; cursor:pointer;" onclick="reply('${p.key}')">💬 Reply</span>
+            </div>
+            <div class="reply-box">${repliesHTML}</div>`;
+        feed.appendChild(card);
+    });
+}
     // --- 5. Actions ---
     function showPreview(input) {
         if (input.files && input.files[0]) {
