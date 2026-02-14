@@ -1,88 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="my">
 <head>
-    <title>User Profile</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arakha Community - Profile</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
     <style>
-        body { background: #0a0a0a; color: #333; font-family: sans-serif; margin: 0; padding: 10px; }
-        .profile-card { max-width: 400px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 20px; text-align: center; border: 3px solid #00ff41; }
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        body { background: #000; color: #ccc; font-family: sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
-        /* Emoji Avatar Style */
-        .avatar-display { font-size: 80px; background: #f0f0f0; width: 120px; height: 120px; line-height: 120px; border-radius: 50%; margin: 0 auto 15px; border: 4px solid #eee; }
+        .profile-card { background: rgba(17, 17, 17, 0.9); border: 1px solid #00ff41; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; backdrop-filter: blur(10px); }
         
-        .info-table { text-align: left; width: 100%; margin-top: 15px; border-collapse: collapse; }
-        .info-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        /* Avatar Logic Styling */
+        .avatar-container { position: relative; width: 100px; height: 100px; margin: 0 auto 20px; }
+        .avatar-display { width: 100px; height: 100px; border-radius: 50%; border: 2px solid #00ff41; display: flex; align-items: center; justify-content: center; background: #111; font-size: 50px; overflow: hidden; object-fit: cover; }
         
-        /* Emoji Picker */
-        .emoji-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; background: #f9f9f9; padding: 10px; border-radius: 10px; }
-        .emoji-item { font-size: 30px; cursor: pointer; padding: 5px; border-radius: 8px; transition: 0.2s; border: 2px solid transparent; }
-        .emoji-item:hover { background: #e0e0e0; }
-        .emoji-item.selected { border-color: #00ff41; background: #e8f5e9; }
+        .upload-icon { position: absolute; bottom: 0; right: 0; background: #00ff41; color: #000; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; border: 2px solid #000; }
 
-        #edit-section { display: none; margin-top: 20px; border-top: 2px dashed #00ff41; padding-top: 20px; text-align: left; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        .btn-edit { background: #00ff41; color: #000; }
-        .btn-save { background: #007bff; color: #fff; }
-        .btn-back { background: #666; color: #fff; }
+        input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #00ff41; padding: 10px; margin-top: 10px; border-radius: 4px; outline: none; box-sizing: border-box; }
+        button { width: 100%; background: #00ff41; color: #000; border: none; padding: 12px; margin-top: 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .back-btn { background: transparent; color: #00ff41; border: 1px solid #00ff41; margin-top: 10px; }
     </style>
 </head>
 <body>
 
+<canvas id="matrix-canvas"></canvas>
+
 <div class="profile-card">
-    <div id="p-img" class="avatar-display">👤</div>
-    <h2 id="p-name" style="margin: 10px 0;">Loading...</h2>
+    <div class="avatar-container">
+        <div id="avatar-view" class="avatar-display">👤</div>
+        <label for="img-input" class="upload-icon">📷</label>
+        <input type="file" id="img-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+    </div>
+
+    <h3 id="display-name" style="color:#00ff41; margin: 10px 0;">User_Name</h3>
+    <p id="user-email" style="font-size: 12px; color: #666;"></p>
+
+    <input type="text" id="username" placeholder="နာမေသစ် ပြောင်းမေ">
+    <textarea id="bio" rows="2" placeholder="ကိုယ့်အကြောင်း စကေတပွေ..."></textarea>
     
-    <table class="info-table">
-        <tr><td><b>အသက်</b></td><td id="p-age">--</td></tr>
-        <tr><td><b>လိင်</b></td><td id="p-gender">--</td></tr>
-        <tr><td><b>မွေးနေ့</b></td><td id="p-dob">--</td></tr>
-    </table>
-
-    <div style="background:#f9f9f9; padding:15px; border-radius:10px; margin-top:15px; text-align:left;">
-        <h4 style="margin:0 0 5px 0;">စတိုလေး (Bio)</h4>
-        <p id="p-bio" style="margin:0; font-style:italic;">...</p>
-    </div>
-
-    <button id="edit-btn" class="btn btn-edit" style="display:none;" onclick="toggleEdit()">ပြင်ဆင်မေ</button>
-    <button class="btn btn-back" onclick="window.history.back()">ပြန်လားမေ</button>
-
-    <div id="edit-section">
-        <h3 style="color:#007bff; margin-top:0;">အချက်အလက်ပြင်မေ</h3>
-        
-        <label>နာမည်:</label>
-        <input type="text" id="input-name">
-
-        <label>Emoji ရွေးပါ:</label>
-        <div class="emoji-grid" id="emoji-picker">
-            </div>
-
-        <label>အသက်:</label>
-        <input type="number" id="input-age">
-
-        <label>လိင်:</label>
-        <select id="input-gender">
-            <option value="ကျား">ကျား</option>
-            <option value="မ">မ</option>
-            <option value="အခြား">အခြား</option>
-        </select>
-
-        <label>မွေးနေ့:</label>
-        <input type="date" id="input-dob">
-
-        <label>ကိုယ့်အကြောင်း (Bio):</label>
-        <textarea id="input-bio" rows="3"></textarea>
-
-        <button id="save-btn" class="btn btn-save" onclick="saveProfile()">သိမ်းဆည်းမေ</button>
-    </div>
+    <button onclick="saveProfile()" id="saveBtn">UPDATE_PROFILE</button>
+    <button class="back-btn" onclick="window.location.href='forum.html'">BACK_TO_FORUM</button>
+    <div id="status" style="font-size: 10px; margin-top: 10px; color: #00ff41;"></div>
 </div>
 
 <script>
+    // --- Firebase Config ---
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -93,83 +58,89 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
-    const params = new URLSearchParams(window.location.search);
-    const profileId = params.get('id');
-    let selectedEmoji = "👤";
-
-    // Emoji စာရင်း
-    const emojis = ["👤", "👨‍💻", "👩‍💻", "🥷", "👑", "✨", // အခြေခံ
-    "👸", "💅", "💃", "🎀", "🌸", "🦋", // မိန်းကလေးများအတွက် ချစ်စရာ
-    "🐱", "🐰", "🦊", "🐼", "🦄", "🐣", // တိရစ္ဆာန်လေးများ
-    "🔥", "🍀", "💎", "🧸", "🎈", "🍭"];
-    const picker = document.getElementById('emoji-picker');
-    
-    emojis.forEach(e => {
-        const span = document.createElement('span');
-        span.className = 'emoji-item';
-        span.innerText = e;
-        span.onclick = () => selectEmoji(e, span);
-        picker.appendChild(span);
-    });
-
-    function selectEmoji(emoji, el) {
-        selectedEmoji = emoji;
-        document.querySelectorAll('.emoji-item').forEach(i => i.classList.remove('selected'));
-        el.classList.add('selected');
-    }
-
-    if (profileId) {
-        db.ref('users/' + profileId).on('value', s => {
-            const data = s.val();
-            if (data) {
-                document.getElementById('p-name').innerText = data.username || "အမည်မသိ";
-                document.getElementById('p-age').innerText = data.age || "--";
-                document.getElementById('p-gender').innerText = data.gender || "--";
-                document.getElementById('p-dob').innerText = data.dob || "--";
-                document.getElementById('p-bio').innerText = data.bio || "ဘာမှမရေးထားပါဘူး။";
-                document.getElementById('p-img').innerText = data.profilePic || "👤";
-                
-                document.getElementById('input-name').value = data.username || "";
-                document.getElementById('input-age').value = data.age || "";
-                document.getElementById('input-gender').value = data.gender || "ကျား";
-                document.getElementById('input-dob').value = data.dob || "";
-                document.getElementById('input-bio').value = data.bio || "";
-                selectedEmoji = data.profilePic || "👤";
-            }
+    // Matrix Background
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const drops = Array(Math.floor(canvas.width / 16)).fill(1);
+    function draw() {
+        ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "#00ff41"; ctx.font = "16px monospace";
+        drops.forEach((y, i) => {
+            ctx.fillText("01"[Math.floor(Math.random()*2)], i*16, y*16);
+            if(y*16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
         });
     }
+    setInterval(draw, 50);
 
+    // --- User Data Load ---
     firebase.auth().onAuthStateChanged(user => {
-        if (user && user.uid === profileId) {
-            document.getElementById('edit-btn').style.display = 'block';
+        if (!user) window.location.href = "index.html";
+        else {
+            document.getElementById('user-email').innerText = user.email;
+            db.ref('users/' + user.uid).on('value', s => {
+                const data = s.val() || {};
+                document.getElementById('username').value = data.username || "";
+                document.getElementById('display-name').innerText = data.username || user.email.split('@')[0];
+                document.getElementById('bio').value = data.bio || "";
+                
+                // Avatar Priority: Link > Emoji > Default
+                const avatarView = document.getElementById('avatar-view');
+                if (data.profilePic && data.profilePic.startsWith('http')) {
+                    avatarView.innerHTML = `<img src="${data.profilePic}" style="width:100%; height:100%; object-fit:cover;">`;
+                } else {
+                    avatarView.innerHTML = data.profilePic || "👤";
+                }
+            });
         }
     });
 
-    function toggleEdit() {
-        const x = document.getElementById('edit-section');
-        x.style.display = (x.style.display === 'none') ? 'block' : 'none';
-    }
-
-    async function saveProfile() {
-        const user = firebase.auth().currentUser;
-        if (!user || user.uid !== profileId) return;
-
-        const updatedData = {
-            username: document.getElementById('input-name').value,
-            profilePic: selectedEmoji, // Emoji ကို သိမ်းမယ်
-            age: document.getElementById('input-age').value,
-            gender: document.getElementById('input-gender').value,
-            dob: document.getElementById('input-dob').value,
-            bio: document.getElementById('input-bio').value
-        };
+    // --- ImgBB ပုံတင်တဲ့ Function ---
+    async function uploadAvatar(input) {
+        if (!input.files || !input.files[0]) return;
+        
+        const status = document.getElementById('status');
+        status.innerText = "ပုံတင်နိန်ပါရေ... တနားချေစောင့်ပါ";
+        
+        const fd = new FormData();
+        fd.append("image", input.files[0]);
 
         try {
-            await db.ref('users/' + user.uid).update(updatedData);
-            alert("သိမ်းပြီးပါယာ!");
-            toggleEdit();
+            // ImgBB API သုံးပြီး ပုံတင်ခြင်း
+            const res = await fetch("https://api.imgbb.com/1/upload?key=926060156d59194f53e97f7cec5ff5a2", {
+                method: "POST",
+                body: fd
+            });
+            const resData = await res.json();
+            if (resData.success) {
+                const imgUrl = resData.data.url;
+                const user = firebase.auth().currentUser;
+                // Database ထဲမှာ Profile ပုံ Link ကို Update လုပ်ခြင်း
+                await db.ref('users/' + user.uid).update({ profilePic: imgUrl });
+                status.innerText = "ပရိုဖိုင်ပုံ ပြောင်းပြီးပါယာ!";
+            }
         } catch (e) {
-            alert("Error: " + e.message);
+            status.innerText = "ပုံတင်လို့ မရပါ (Error)!";
         }
+    }
+
+    // --- အချက်အလက် သိမ်းခြင်း ---
+    function saveProfile() {
+        const user = firebase.auth().currentUser;
+        const name = document.getElementById('username').value;
+        const bio = document.getElementById('bio').value;
+        const btn = document.getElementById('saveBtn');
+
+        btn.disabled = true;
+        db.ref('users/' + user.uid).update({
+            username: name,
+            bio: bio
+        }).then(() => {
+            btn.disabled = false;
+            document.getElementById('status').innerText = "သိမ်းဆည်းပြီးပါယာ!";
+            setTimeout(() => document.getElementById('status').innerText = "", 2000);
+        });
     }
 </script>
 </body>
