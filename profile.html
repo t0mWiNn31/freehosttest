@@ -114,18 +114,32 @@
     const urlParams = new URLSearchParams(window.location.search);
     const viewId = urlParams.get('id'); // URL က id ကို ဖတ်မယ်
 
-    firebase.auth().onAuthStateChanged(user => {
-        if (!user) {
-            window.location.href = "index.html";
-            return;
-        }
+   // --- Profile Logic အပိုင်းထဲမှာ ဒါလေးကို ရှာပြီး ပြင်ပါ ---
+firebase.auth().onAuthStateChanged(user => {
+    if (!user) {
+        window.location.href = "index.html";
+        return;
+    }
 
-        const myId = user.uid;
-        // တကယ်လို့ URL မှာ ID မပါရင် ကိုယ့် Profile ကို ပြမယ်
-        // ID ပါခဲ့ရင် အဲ့ဒီ ID ရဲ့ Data ကို ပြမယ်
-        const targetId = viewId || myId;
-        const isMyProfile = (targetId === myId);
+    const myId = user.uid;
+    const targetId = viewId || myId;
+    const isMyProfile = (targetId === myId);
 
+    if (!isMyProfile) {
+        // ကိုယ့် Profile မဟုတ်ရင်...
+        document.getElementById('saveBtn').style.display = 'none'; // Update ခလုတ်ဖျောက်
+        document.getElementById('msgBtn').style.display = 'block'; // Message ခလုတ်ပြ
+        
+        // Input တွေကို Read-only လုပ်တဲ့ ကျန်တဲ့ ကုဒ်တွေ ဒီအောက်မှာ ဆက်ရှိမယ်...
+        document.getElementById('username').readOnly = true;
+        // ... စသဖြင့် ...
+    }
+});
+
+// Chat ကို သွားမယ့် Function
+function goToChat() {
+    window.location.href = "chat.html";
+}
         // Edit Button တွေနဲ့ Input တွေကို ကိုယ့် Profile မဟုတ်ရင် ပိတ်ထားမယ်
         if (!isMyProfile) {
             document.getElementById('saveBtn').style.display = 'none';
