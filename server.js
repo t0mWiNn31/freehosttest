@@ -1,37 +1,41 @@
-require('dotenv').config();
 const express = require('express');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const cors = require('cors');
+const fetch = require('node-fetch');
 const path = require('path');
 const app = express();
 
+app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
 
-// --- ဒီအပိုင်းက ကိုကို့ဆီမှာ မပါခဲ့တဲ့ AI ချက်တဲ့ အပိုင်းပါ ---
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// HTML, CSS, JS ဖိုင်တွေကို အလုပ်လုပ်အောင် လုပ်ပေးတာ
+app.use(express.static(path.join(__dirname, '.')));
 
-app.post('/chat', async (req, res) => {
+// ကိုကို့ Key
+const GEMINI_API_KEY = "AIzaSyB63jrk5SPwZyULGyi6lJIp2q0oIDFT9lQ"; 
+
+app.post('/ask', async (req, res) => {
+    const userMsg = req.body.message;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    
+    // ရက္ခိုင်လို ဖြေခိုင်းဖို့ ညွှန်ကြားချက်
+    const promptInstructions = "You are a helpful assistant for ARAKHA_FORUM. Always reply in Rakhine language (Rakhine dialect) using Myanmar Unicode script. Use friendly terms like 'ကိုကို', 'အချေ'. User message: ";
+
     try {
-        // Gemini 1.5 Flash က ပိုမြန်ပြီး ဈေးသက်သာပါတယ်
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        
-        const result = await model.generateContent(req.body.message);
-        const response = await result.response;
-        const text = response.text();
-        
-        res.json({ reply: text });
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: promptInstructions + userMsg }] }]
+            })
+        });
+        const data = await response.json();
+        res.json(data);
     } catch (error) {
-        console.error("AI Error:", error);
-        res.status(500).json({ error: "ဗျာလ် စဉ်းစားလို့ မရဖြစ်နေတယ် ကိုကို။" });
+        console.error("Backend Error:", error);
+        res.status(500).json({ error: "Backend Error" });
     }
 });
 
-// Website ရဲ့ အဓိက စာမျက်နှာတွေကို လမ်းကြောင်းပေးတာ
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
+// Port သတ်မှတ်တာ
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
