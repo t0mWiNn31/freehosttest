@@ -4,60 +4,52 @@ const fetch = require('node-fetch');
 const path = require('path');
 const app = express();
 
-// CORS Setting - အခြား Link (raptors.onrender.com) ကနေ ခေါ်တာကို ခွင့်ပြုဖို့
 app.use(cors());
 app.use(express.json());
-
-// လက်ရှိ Folder ထဲက HTML ဖိုင်တွေကို ပွင့်အောင်လုပ်တာ
 app.use(express.static(path.join(__dirname, '.')));
 
-// ကိုကို့ရဲ့ Gemini API Key
-const GEMINI_API_KEY = "AIzaSyB63jrk5SPwZyULGyi6lJIp2q0oIDFT9lQ"; 
+// --- ကိုကို့ရဲ့ Coze Data များ ---
+const COZE_ACCESS_TOKEN = "pat_xscdeApM6TBBKMeCu4mEvUNdaZKuAmNigxRxuHSbxfOfgj9MTQWuOtt4TrBDeJlD"; 
+const BOT_ID = "7607801335647338501"; 
 
-// Backend အလုပ်လုပ်လား စစ်ဖို့ Link (https://raptorss.onrender.com/test)
-app.get('/test', (req, res) => {
-    res.send("Backend is running smoothly, Ko Ko!");
-});
+app.get('/test', (req, res) => res.send("Coze Backend is Live!"));
 
 app.post('/ask', async (req, res) => {
     const userMsg = req.body.message;
-    // URL format ကို သေချာပြန်စစ်ထားပါတယ်
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-    
+
     try {
-        const response = await fetch(url, {
+        const response = await fetch("https://api.coze.com/open_api/v2/chat", {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Authorization': `Bearer ${COZE_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json',
+                'Connection': 'keep-alive'
+            },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: "Reply in Rakhine language: " + userMsg 
-                    }]
-                }]
+                bot_id: BOT_ID,
+                user: "Raptors_User",
+                query: userMsg,
+                stream: false
             })
         });
 
         const data = await response.json();
 
-        // Google က ပေးတဲ့ error အစစ်ကို သိရအောင် console မှာ ထုတ်ကြည့်မယ်
-        if (data.error) {
-            console.log("Google Error:", data.error);
-            return res.status(400).json({ error: data.error.message });
-        }
-
-        // Response ရှိမရှိ အဆင့်ဆင့် စစ်ဆေးမယ်
-        if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts) {
-            const aiText = data.candidates[0].content.parts[0].text;
-            res.json({ reply: aiText });
+        // Coze API က ပြန်လာတဲ့ အဖြေကို စစ်ထုတ်မယ်
+        if (data.messages && data.messages.length > 0) {
+            const aiMessage = data.messages.find(m => m.type === 'answer');
+            if (aiMessage) {
+                res.json({ reply: aiMessage.content });
+            } else {
+                res.json({ reply: "အဖြေရှာမတွေ့သေးဘူး ကိုကို။" });
+            }
         } else {
-            res.status(500).json({ error: "No response from AI Model. Please try again." });
+            res.status(500).json({ error: "Coze Bot ဆီက အကြောင်းပြန်ချက်မရပါဘူး။" });
         }
     } catch (error) {
         res.status(500).json({ error: "Server Error: " + error.message });
     }
 });
-// Render ရဲ့ Port သို့မဟုတ် Port 3000 မှာ Run မယ်
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
