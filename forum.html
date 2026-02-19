@@ -119,11 +119,19 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
-    // --- 3. Utilities ---
+    // --- 3. Utilities & Counters (ကိုကို့အတွက် ပြင်ပေးထားတဲ့အပိုင်း) ---
     function escapeHTML(str) {
         if (!str) return "";
         return str.replace(/[&<>"']/g, function(m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]; });
     }
+    
+    // Online/Total User တွေကို ဒီမှာ စောင့်ကြည့်ပေးထားပါတယ်
+    db.ref('users').on('value', s => {
+        document.getElementById('total-count').innerText = s.numChildren();
+        let on = 0; s.forEach(u => { if(u.val().isOnline) on++; });
+        document.getElementById('online-count').innerText = on;
+    });
+
     function formatText(text, postId) {
         const limit = 200; if (text.length <= limit) return text;
         const shortText = text.substring(0, limit);
@@ -180,7 +188,7 @@
     function like(id) { db.ref(`posts/${id}/likes`).transaction(c => (c || 0) + 1); }
     function switchTab(t) { currentTab = t; document.getElementById('tab-latest').classList.toggle('active', t==='latest'); document.getElementById('tab-popular').classList.toggle('active', t==='popular'); renderFeed(); }
     function goToProfile() { const u = firebase.auth().currentUser; if(u) window.location.href = "profile.html?id=" + u.uid; }
-    function logout() { if (confirm("လားပါဖို့ယာလား?")) { firebase.auth().signOut().then(() => window.location.href = "index.html"); } }
+    function logout() { if (confirm("လားပါဖို့ယာလား?အားကေလာလည်ပါ")) { firebase.auth().signOut().then(() => window.location.href = "index.html"); } }
 
     firebase.auth().onAuthStateChanged(user => {
         if (!user) window.location.href = "index.html";
@@ -194,23 +202,14 @@
 <script src="https://sf-cdn.coze.com/obj/unpkg-va/flow-platform/chat-app-sdk/1.2.0-beta.6/libs/oversea/index.js"></script>
 <script>
   new CozeWebSDK.WebChatClient({
-    config: {
-      bot_id: '7608533750734340101',
-    },
-    componentProps: {
-      title: 'အချေ (ရက္ခိုင်မချေ)',
-    },
+    config: { bot_id: '7608533750734340101' },
+    componentProps: { title: 'အချေ (ရက္ခိုင်မချေ)' },
     auth: {
       type: 'token',
       token: 'pat_gZDQtodxBx9jf2vMEJke4I1jB1JdNGhf5mW074uHOwyfV8DLpyZo3EblUjKPyGAy',
-      onRefreshToken: function () {
-        return 'pat_gZDQtodxBx9jf2vMEJke4I1jB1JdNGhf5mW074uHOwyfV8DLpyZo3EblUjKPyGAy';
-      }
+      onRefreshToken: function () { return 'pat_gZDQtodxBx9jf2vMEJke4I1jB1JdNGhf5mW074uHOwyfV8DLpyZo3EblUjKPyGAy'; }
     },
-    ui: {
-      base: { zIndex: 1000 },
-      chatBot: { title: 'အချေ (ရက္ခိုင်မချေ)', uploadIcon: true }
-    }
+    ui: { base: { zIndex: 1000 }, chatBot: { title: 'အချေ (ရက္ခိုင်မချေ)', uploadIcon: true } }
   });
 </script>
 
