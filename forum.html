@@ -157,14 +157,49 @@
         win.style.display = (win.style.display === 'none' || win.style.display === '') ? 'flex' : 'none';
     }
     async function askAI() {
-        const q = document.getElementById('ai-query').value; if(!q) return;
-        const m = document.getElementById('ai-messages');
-        m.innerHTML += `<div class="msg user">${q}</div>`;
-        document.getElementById('ai-query').value = "";
-        m.innerHTML += `<div class="msg bot">ကိုကို... အချေ စဉ်းစားနီရေ...</div>`;
-        m.scrollTop = m.scrollHeight;
-    }
+    const queryInput = document.getElementById('ai-query');
+    const query = queryInput.value.trim();
+    if (!query) return;
 
+    const msgDiv = document.getElementById('ai-messages');
+    msgDiv.innerHTML += `<div class="msg user">${query}</div>`;
+    queryInput.value = "";
+
+    const botMsgId = "bot-" + Date.now();
+    msgDiv.innerHTML += `<div class="msg bot" id="${botMsgId}">စဉ်းစားနီရေ...</div>`;
+    msgDiv.scrollTop = msgDiv.scrollHeight;
+
+    // --- Configuration (ကိုကို့ Worker နဲ့ Key) ---
+    const API_KEY = "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow"; 
+    const PROXY_URL = "https://forumhelper.winnertom8.workers.dev"; // ကိုကို ခုနက ဆောက်လိုက်တဲ့ URL
+
+    try {
+        // အခုက Google ဆီ တိုက်ရိုက်မသွားဘဲ ကိုကို့ Worker ဆီ အရင်သွားမှာဖြစ်လို့ VPN မလိုတော့ပါဘူး
+        const response = await fetch(`${PROXY_URL}/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: query }]
+                }]
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+            const aiText = data.candidates[0].content.parts[0].text;
+            document.getElementById(botMsgId).innerText = aiText;
+        } else {
+            document.getElementById(botMsgId).innerText = "အဖြေ မရရှိပါဘူး။ API Key ဒါမှမဟုတ် Worker မှာ တစ်ခုခု မှားနေလို့ ဖြစ်နိုင်ပါတယ်။";
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        document.getElementById(botMsgId).innerText = "ချိတ်ဆက်မှု အမှားဖြစ်သွားပါရေ။ Worker ကုဒ်ကို ပြန်စစ်ပေးပါ";
+    }
+    
+    msgDiv.scrollTop = msgDiv.scrollHeight;
+}
     // --- 4. Forum Functions (မူလအတိုင်း အကုန်ပြန်ထည့်ထားသည်) ---
     let userDataCache = {}; let postsData = []; let currentTab = 'latest';
 
