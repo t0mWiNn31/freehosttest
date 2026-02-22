@@ -169,15 +169,20 @@
     msgDiv.innerHTML += `<div class="msg bot" id="${botMsgId}">စဉ်းစားနီရေ...</div>`;
     msgDiv.scrollTop = msgDiv.scrollHeight;
 
-    // --- Configuration (ကိုကို့ Worker နဲ့ Key) ---
-    const API_KEY = "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow"; 
-    const PROXY_URL = "https://forumhelper.winnertom8.workers.dev"; // ကိုကို ခုနက ဆောက်လိုက်တဲ့ URL
+    // --- Configuration ---
+    // ကိုကို အခုပေးတဲ့ Gemini Key ကို ထည့်ထားပါတယ်
+    const API_KEY = "AIzaSyCO6AnWclvWyByCcRjsenFOTgwEQh_gyXs"; 
+    
+    // ဒီနေရာမှာ ကိုကို့ရဲ့ Cloudflare Worker URL ကို ထည့်ပေးပါ (ဥပမာ- https://gemini-proxy.xxx.workers.dev)
+    const PROXY_URL = "ကိုကို့_WORKER_URL_ဒီမှာထည့်ပါ"; 
 
     try {
-        // အခုက Google ဆီ တိုက်ရိုက်မသွားဘဲ ကိုကို့ Worker ဆီ အရင်သွားမှာဖြစ်လို့ VPN မလိုတော့ပါဘူး
+        // Cloudflare Proxy ကနေတဆင့် Gemini ဆီ သွားမှာဖြစ်လို့ ဒေသကန့်သတ်ချက် မရှိတော့ပါဘူး
         const response = await fetch(`${PROXY_URL}/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 contents: [{
                     parts: [{ text: query }]
@@ -188,14 +193,18 @@
         const data = await response.json();
 
         if (data.candidates && data.candidates[0].content.parts[0].text) {
-            const aiText = data.candidates[0].content.parts[0].text;
+            let aiText = data.candidates[0].content.parts[0].text;
+            
+            // စာသားထဲမှာ ပါလာနိုင်တဲ့ Markdown သင်္ကေတတွေကို ရှင်းပေးတာပါ
             document.getElementById(botMsgId).innerText = aiText;
+        } else if (data.error) {
+            document.getElementById(botMsgId).innerText = "Error: " + data.error.message;
         } else {
-            document.getElementById(botMsgId).innerText = "အဖြေ မရရှိပါဘူး။ API Key ဒါမှမဟုတ် Worker မှာ တစ်ခုခု မှားနေလို့ ဖြစ်နိုင်ပါတယ်။";
+            document.getElementById(botMsgId).innerText = "အဖြေ မရရှိပါဘူး။";
         }
     } catch (error) {
-        console.error("Error:", error);
-        document.getElementById(botMsgId).innerText = "ချိတ်ဆက်မှု အမှားဖြစ်သွားပါရေ။ Worker ကုဒ်ကို ပြန်စစ်ပေးပါ";
+        console.error("Gemini Error:", error);
+        document.getElementById(botMsgId).innerText = "ချိတ်ဆက်မှု အမှားဖြစ်သွားပါရေ။ Worker URL ကို သေချာပြန်စစ်ပေးပါ။";
     }
     
     msgDiv.scrollTop = msgDiv.scrollHeight;
